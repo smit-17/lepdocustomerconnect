@@ -1,0 +1,2 @@
+ALTER TABLE public.documents DROP CONSTRAINT documents_doc_type_check;
+ALTER TABLE public.documents ADD CONSTRAINT documents_doc_type_check CHECK (doc_type = ANY (ARRAY['proforma_invoice','bank_details','payment_confirmation','final_invoice','commercial_invoice','gst_invoice','diamond_certificate','cad_design','qc_image','jewellery_photo','shipping_document','other']::text[]));

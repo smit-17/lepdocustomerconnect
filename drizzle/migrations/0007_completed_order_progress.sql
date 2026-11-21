@@ -1,0 +1,3 @@
+CREATE OR REPLACE FUNCTION public.finalise_completed_progress() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF NEW.status='completed' THEN NEW.progress_pct:=100; END IF; RETURN NEW; END $$;
+CREATE TRIGGER orders_completed_progress BEFORE INSERT OR UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION public.finalise_completed_progress();
+UPDATE public.orders SET progress_pct=100 WHERE status='completed' AND progress_pct<>100;

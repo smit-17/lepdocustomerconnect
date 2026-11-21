@@ -1,0 +1,11 @@
+- [x] Apply latest ZIP add-step controls with secure insertion and existing safeguards.
+- [x] Verify added steps persist and appear for the customer; remove temporary checks.
+- [x] Apply uploaded invoice controls and upload defaults, preserving tested safety checks.
+- [x] Verify invoice saving and customer visibility.
+- [x] Import uploaded order-step controls and team contact changes, preserving existing connections.
+- [x] Add missing secure step-editing functions and verify the updated staff workflow.
+- [x] Add secure KYC, terms acceptance, customer payment proof and CAD approval.
+- [x] Update portal navigation, counters, read-only profile and expandable order journey.
+- [x] Extend order workflows, payment verification gates and staff attention filters.
+- [x] Verify customer-to-staff actions and run focused tests.
+- [x] Add supplied legal terms, version 1.0 effective 20 November 2026.- [x] Order workflow v2: approvals, final invoice, metal supply, photography, document preview.

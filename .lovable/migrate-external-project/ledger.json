@@ -1,0 +1,79 @@
+[
+  {
+    "capability": "code",
+    "source": "Latest ZIP: new add-step editor; remaining differences repeat prior safeguards",
+    "outcome": "Applied add-step controls; retained tested step guards, invoice mapping and caller-scoped invitation authorization",
+    "status": "verified",
+    "next_action": null
+  },
+  {
+    "capability": "schema",
+    "source": "Existing Cloud schema and archived migrations",
+    "outcome": "Added admin-only insertion function; validated names and same-order insertion points; legacy positions stay immutable",
+    "status": "verified",
+    "next_action": null
+  },
+  {
+    "capability": "records",
+    "source": "Existing connected Cloud data",
+    "outcome": "Preserve; no data migration",
+    "status": "preserved",
+    "next_action": null
+  },
+  {
+    "capability": "auth identities",
+    "source": "Existing connected Cloud authentication",
+    "outcome": "Preserve",
+    "status": "preserved",
+    "next_action": null
+  },
+  {
+    "capability": "authorization",
+    "source": "Uploaded invite uses privileged role reads",
+    "outcome": "Retain caller-scoped role checks and tested step guards",
+    "status": "preserved",
+    "next_action": null
+  },
+  {
+    "capability": "uploaded file bytes",
+    "source": "Existing private Cloud storage",
+    "outcome": "Preserve",
+    "status": "preserved",
+    "next_action": null
+  },
+  {
+    "capability": "external providers",
+    "source": "Existing Cloud services only",
+    "outcome": "Preserve",
+    "status": "preserved",
+    "next_action": null
+  },
+  {
+    "capability": "public endpoints / callbacks / webhooks / schedules",
+    "source": "No changed source paths",
+    "outcome": "Preserve existing behavior",
+    "status": "preserved",
+    "next_action": null
+  },
+  {
+    "capability": "secrets",
+    "source": "No required new variables",
+    "outcome": "Exclude environment files",
+    "status": "preserved",
+    "next_action": null
+  },
+  {
+    "capability": "cutover",
+    "source": "In-place source update",
+    "outcome": "No cutover required",
+    "status": "preserved",
+    "next_action": null
+  },
+  {
+    "capability": "verification",
+    "source": "Add-step persistence and customer journey",
+    "outcome": "19 tests passed; start/middle insertion persisted and appeared for Customer; unauthorized insertion, oversized names and invalid parents rejected; mobile has no overflow; temporary steps removed",
+    "status": "verified",
+    "next_action": null
+  }
+]

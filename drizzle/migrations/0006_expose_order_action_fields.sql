@@ -1,0 +1,3 @@
+DO $$ DECLARE definition text; BEGIN SELECT pg_get_viewdef('public.order_list'::regclass,true) INTO definition; definition:=regexp_replace(definition,';\s*$',''); EXECUTE 'CREATE OR REPLACE VIEW public.order_list WITH (security_invoker=true) AS SELECT existing.*, o.payment_terms, o.customer_action_required, o.current_responsible_dept FROM ('||definition||') existing JOIN public.orders o ON o.id=existing.id'; END $$;
+GRANT SELECT ON public.order_list TO authenticated;
+GRANT ALL ON public.order_list TO service_role;
