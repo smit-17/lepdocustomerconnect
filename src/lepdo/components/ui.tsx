@@ -4,15 +4,17 @@ import type { Tone } from '../lib/workflows';
 import { initials } from '../lib/format';
 import logoBlack from '@/assets/lepdo-logo-black.png.asset.json';
 import logoWhite from '@/assets/lepdo-logo-white.png.asset.json';
+import logoBrand from '@/assets/lepdo-logo-brand.png.asset.json';
 
 export function cx(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(' ');
 }
 
 /* ------------------------------------------------------------------ Logo */
-export function Logo({ className = 'h-6', variant = 'black' }: { className?: string; variant?: 'black' | 'white' }) {
-  // Original LEPDO master artwork (approved black / white versions only — never recoloured).
-  return <img src={variant === 'white' ? logoWhite.url : logoBlack.url} alt="LEPDO" className={cx('w-auto max-w-none shrink-0 self-start object-contain select-none', className)} draggable={false} />;
+export function Logo({ className = 'h-6', variant = 'black' }: { className?: string; variant?: 'black' | 'white' | 'brand' }) {
+  // 'brand' = new colour logo for app dashboards; 'black'/'white' = original master artwork (sign-in screens).
+  const src = variant === 'white' ? logoWhite.url : variant === 'brand' ? logoBrand.url : logoBlack.url;
+  return <img src={src} alt="LEPDO" className={cx('w-auto max-w-none shrink-0 self-start object-contain select-none', className)} draggable={false} />;
 }
 
 /* ---------------------------------------------------------------- Button */

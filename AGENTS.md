@@ -44,3 +44,4 @@ use the editor.
 - Terms acceptance references published database versions and records server timestamps. Why: keep consent tied to the exact approved wording.
 - Invoice-step controls use the shared workflow mapping and existing document upload/stage-update paths. Why: keep invoice amounts, file types and progress aligned without bypassing access rules.
 <!-- AGENT-MEMORY:END -->
+- Destructive history actions use an admin-validated transactional RPC and authenticated server function; storage cleanup uses only returned order file paths. Why: preserve customer records and delete dependent order rows atomically.

@@ -10,6 +10,7 @@ import { AVATAR_BUCKET, supabase } from '../../lib/supabase';
 import { errorMessage, fmtDate, timeAgo } from '../../lib/format';
 import { CURRENCIES } from '../../lib/workflows';
 import type { Role } from '../../lib/types';
+import ResetHistoryButton from '../../components/ResetHistoryButton';
 
 type Tab = 'company' | 'team' | 'invitations' | 'account';
 
@@ -401,6 +402,7 @@ function AccountSettings() {
           <Field label="Confirm password"><Input type="password" autoComplete="new-password" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} /></Field>
           <Button type="submit" loading={busy === 'pw'}>Update password</Button>
         </form>
+        <div className="mt-6"><ResetHistoryButton /></div>
       </Card>
     </div>
   );

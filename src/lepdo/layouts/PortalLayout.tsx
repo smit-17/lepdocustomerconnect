@@ -20,7 +20,7 @@ export default function PortalLayout() {
       <header className="sticky top-0 z-30 border-b border-cream-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link to="/portal" className="flex items-center gap-3">
-            <Logo className="h-6 sm:h-7" />
+            <Logo className="h-6 sm:h-7" variant="brand" />
             <span className="hidden text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-orange sm:inline">Connect</span>
           </Link>
           <div className="flex items-center gap-1 sm:gap-3">

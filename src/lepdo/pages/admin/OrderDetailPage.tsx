@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useParams } from '@/lepdo/router';
+import { Link, useParams, useNavigate } from '@/lepdo/router';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Ellipsis, Pencil, RefreshCw, Star } from 'lucide-react';
 import { Button, Card, Drawer, ErrorNote, Field, Input, PageLoader, Select, Stat, Textarea, cx } from '../../components/ui';
@@ -13,6 +13,7 @@ import type { OrderListRow, OrderStatus } from '../../lib/types';
 import { ProgressSection, UpdateProgressDrawer } from './order/ProgressSection';
 import { PaymentsDocsSection } from './order/PaymentsDocsSection';
 import { ShippingSection } from './order/ShippingSection';
+import DeleteOrderButton from '../../components/DeleteOrderButton';
 
 export default function OrderDetailPage() {
   const { id = '' } = useParams();
@@ -23,6 +24,7 @@ export default function OrderDetailPage() {
   const documents = useDocuments(id);
   const shipments = useShipments(id);
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const toast = useToast();
   const [progress, setProgress] = useState<{ open: boolean; stageId?: string }>({ open: false });
   const [editOpen, setEditOpen] = useState(false);
@@ -65,10 +67,11 @@ export default function OrderDetailPage() {
             <span>Updated {timeAgo(o.updated_at)}</span>
           </div>
         </div>
-        <div className="relative flex shrink-0 items-center gap-2">
+        <div className="relative flex shrink-0 flex-wrap items-center gap-2">
           <Button icon={<Pencil className="h-4 w-4" />} onClick={() => setEditOpen(true)}>Edit</Button>
           <Button variant="primary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => setProgress({ open: true })} disabled={o.status === 'cancelled'}>Update Progress</Button>
           <button onClick={() => setMenu((v) => !v)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50" aria-label="More actions"><Ellipsis className="h-4 w-4" /></button>
+          <DeleteOrderButton orderId={o.id} reference={o.reference} onDeleted={() => navigate('/admin/orders')} />
           {menu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenu(false)} />

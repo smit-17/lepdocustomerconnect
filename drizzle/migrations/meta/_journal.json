@@ -92,6 +92,13 @@
       "when": 1795258394232,
       "tag": "0012_admin_add_order_step",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795320090572,
+      "tag": "0013_admin_delete_order_history",
+      "breakpoints": true
     }
   ]
 }

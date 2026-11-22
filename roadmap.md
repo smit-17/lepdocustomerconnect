@@ -1,3 +1,5 @@
+- [x] Add administrator order deletion and Reset History, preserving customer records and accounts.
+- [x] Verify temporary order deletion, reset confirmation, mobile controls and focused permission tests; full reset not executed against existing data.
 - [x] Apply latest ZIP add-step controls with secure insertion and existing safeguards.
 - [x] Verify added steps persist and appear for the customer; remove temporary checks.
 - [x] Apply uploaded invoice controls and upload defaults, preserving tested safety checks.

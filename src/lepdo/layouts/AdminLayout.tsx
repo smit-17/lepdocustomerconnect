@@ -66,7 +66,7 @@ export default function AdminLayout() {
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-slate-200/80 bg-white px-4 py-5 lg:flex">
           <div className="mb-8 px-2">
-            <Logo className="h-7" />
+            <Logo className="h-7" variant="brand" />
             <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-orange">Connect</p>
           </div>
           <div className="flex-1">{nav}</div>
@@ -75,7 +75,7 @@ export default function AdminLayout() {
 
         {/* Mobile top bar */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
-          <Logo className="h-6" />
+          <Logo className="h-6" variant="brand" />
           <button onClick={() => setMobileOpen(true)} className="rounded-lg p-2 text-brand-indigo hover:bg-slate-100" aria-label="Open menu">
             <Menu className="h-5 w-5" />
           </button>
@@ -85,7 +85,7 @@ export default function AdminLayout() {
             <div className="absolute inset-0 bg-slate-900/30" onClick={() => setMobileOpen(false)} />
             <div className="absolute inset-y-0 left-0 flex w-72 flex-col bg-white px-4 py-5 shadow-pop">
               <div className="mb-6 flex items-center justify-between px-2">
-                <Logo className="h-6" />
+                <Logo className="h-6" variant="brand" />
                 <button onClick={() => setMobileOpen(false)} className="rounded-lg p-1.5 text-slate-500" aria-label="Close menu"><X className="h-5 w-5" /></button>
               </div>
               <div className="flex-1">{nav}</div>

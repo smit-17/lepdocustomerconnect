@@ -1228,6 +1228,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_order_history: {
+        Args: { p_confirmation?: string; p_order_id?: string }
+        Returns: Json
+      }
       admin_user_directory: {
         Args: never
         Returns: {
