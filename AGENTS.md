@@ -45,3 +45,5 @@ use the editor.
 - Invoice-step controls use the shared workflow mapping and existing document upload/stage-update paths. Why: keep invoice amounts, file types and progress aligned without bypassing access rules.
 <!-- AGENT-MEMORY:END -->
 - Destructive history actions use an admin-validated transactional RPC and authenticated server function; storage cleanup uses only returned order file paths. Why: preserve customer records and delete dependent order rows atomically.
+- Order action visibility shares one workflow predicate; order lists load completed handovers in one batched query. Why: match detail and list controls without per-row requests.
+- Step editing uses stage progress and a persisted admin configuration override, enforced by a shared database guard in all four step RPCs. Why: disabling the switch must block open editors and direct requests too.

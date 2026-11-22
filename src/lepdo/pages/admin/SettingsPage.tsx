@@ -12,7 +12,7 @@ import { CURRENCIES } from '../../lib/workflows';
 import type { Role } from '../../lib/types';
 import ResetHistoryButton from '../../components/ResetHistoryButton';
 
-type Tab = 'company' | 'team' | 'invitations' | 'account';
+type Tab = 'company' | 'team' | 'invitations' | 'account' | 'configuration';
 
 interface DirRow {
   id: string; email: string; full_name: string; role: Role; is_active: boolean; customer_id: string | null; customer_name: string | null;
@@ -27,7 +27,7 @@ export default function SettingsPage() {
   const { isAdmin } = useAuth();
   const [tab, setTab] = useState<Tab>('company');
   const items = isAdmin
-    ? [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'team' as Tab, label: 'Team Members' }, { value: 'invitations' as Tab, label: 'User Invitations' }, { value: 'account' as Tab, label: 'Account Settings' }]
+    ? [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'team' as Tab, label: 'Team Members' }, { value: 'invitations' as Tab, label: 'User Invitations' }, { value: 'account' as Tab, label: 'Account Settings' }, { value: 'configuration' as Tab, label: 'Configuration' }]
     : [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'account' as Tab, label: 'Account Settings' }];
   return (
     <>
@@ -37,8 +37,34 @@ export default function SettingsPage() {
       {tab === 'team' && isAdmin && <TeamMembers />}
       {tab === 'invitations' && isAdmin && <Invitations />}
       {tab === 'account' && <AccountSettings />}
+      {tab === 'configuration' && isAdmin && <Configuration />}
     </>
   );
+}
+
+function Configuration() {
+  const settings = useSettings();
+  const qc = useQueryClient();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  async function change(checked: boolean) {
+    if (busy || !settings.data) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.from('app_settings').update({ edit_running_order_steps: checked }).eq('id', 1);
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: keys.settings });
+      toast.success('Configuration saved');
+    } catch (error) { toast.error(errorMessage(error)); }
+    finally { setBusy(false); }
+  }
+  if (settings.isLoading) return <PageLoader />;
+  return <section className="max-w-2xl">
+    <h2 className="mb-4 text-lg font-semibold text-brand-indigo">Configuration</h2>
+    <fieldset disabled={busy || !settings.data}>
+      <Toggle checked={settings.data?.edit_running_order_steps ?? false} onChange={change} label="Edit steps while order running" />
+    </fieldset>
+  </section>;
 }
 
 /* ================================================================ Company */

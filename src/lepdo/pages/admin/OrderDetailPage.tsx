@@ -8,7 +8,7 @@ import { useToast } from '../../components/Toast';
 import { orderKeys, useDocuments, useOrder, usePayments, useShipments, useStaff, useStages, useUpdates } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
 import { errorMessage, fmtDate, money, timeAgo } from '../../lib/format';
-import { CURRENCIES } from '../../lib/workflows';
+import { CURRENCIES, orderActionsLocked } from '../../lib/workflows';
 import type { OrderListRow, OrderStatus } from '../../lib/types';
 import { ProgressSection, UpdateProgressDrawer } from './order/ProgressSection';
 import { PaymentsDocsSection } from './order/PaymentsDocsSection';
@@ -33,9 +33,11 @@ export default function OrderDetailPage() {
   if (order.isLoading) return <PageLoader />;
   if (order.error || !order.data) return <ErrorNote error={order.error || 'Order not found'} />;
   const o = order.data;
+  const actionsLocked = orderActionsLocked(o.status, stages.data);
 
   async function setStatus(status: OrderStatus) {
     setMenu(false);
+    if (actionsLocked && status !== 'completed') return;
     if (status === 'cancelled' && !window.confirm(`Cancel order ${o.reference}? The customer will no longer see it.`)) return;
     const { error } = await supabase.from('orders').update({ status }).eq('id', o.id);
     if (error) return toast.error(errorMessage(error));
@@ -70,15 +72,15 @@ export default function OrderDetailPage() {
         <div className="relative flex shrink-0 flex-wrap items-center gap-2">
           <Button icon={<Pencil className="h-4 w-4" />} onClick={() => setEditOpen(true)}>Edit</Button>
           <Button variant="primary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => setProgress({ open: true })} disabled={o.status === 'cancelled'}>Update Progress</Button>
-          <button onClick={() => setMenu((v) => !v)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50" aria-label="More actions"><Ellipsis className="h-4 w-4" /></button>
-          <DeleteOrderButton orderId={o.id} reference={o.reference} onDeleted={() => navigate('/admin/orders')} />
-          {menu && (
+          {(o.status === 'active' || !actionsLocked) && <button onClick={() => setMenu((v) => !v)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50" aria-label="More actions"><Ellipsis className="h-4 w-4" /></button>}
+          <DeleteOrderButton orderId={o.id} reference={o.reference} locked={actionsLocked} onDeleted={() => navigate('/admin/orders')} />
+          {menu && (o.status === 'active' || !actionsLocked) && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenu(false)} />
               <div className="absolute right-0 top-12 z-20 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-pop">
                 {o.status === 'active' && <button className="block w-full px-4 py-2 text-left hover:bg-slate-50" onClick={() => setStatus('completed')}>Mark order completed</button>}
-                {o.status !== 'active' && <button className="block w-full px-4 py-2 text-left hover:bg-slate-50" onClick={() => setStatus('active')}>Reopen order</button>}
-                {o.status !== 'cancelled' && <button className="block w-full px-4 py-2 text-left text-red-700 hover:bg-red-50" onClick={() => setStatus('cancelled')}>Cancel order</button>}
+                {!actionsLocked && o.status !== 'active' && <button className="block w-full px-4 py-2 text-left hover:bg-slate-50" onClick={() => setStatus('active')}>Reopen order</button>}
+                {!actionsLocked && o.status !== 'cancelled' && <button className="block w-full px-4 py-2 text-left text-red-700 hover:bg-red-50" onClick={() => setStatus('cancelled')}>Cancel order</button>}
               </div>
             </>
           )}

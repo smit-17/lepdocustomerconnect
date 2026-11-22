@@ -12,8 +12,20 @@ describe('Uploaded order-step changes', () => {
   it('allows only administrators to edit steps', () => {
     expect(canEditOrderSteps(true, 'active')).toBe(true);
     expect(canEditOrderSteps(false, 'active')).toBe(false);
-    expect(canEditOrderSteps(true, 'completed')).toBe(true);
+    expect(canEditOrderSteps(true, 'completed')).toBe(false);
     expect(canEditOrderSteps(true, 'cancelled')).toBe(false);
+  });
+  it('hides step editing as soon as any stage starts or completes with the default-off setting', () => {
+    expect(canEditOrderSteps(true, 'active', [{ status: 'upcoming' }])).toBe(true);
+    expect(canEditOrderSteps(true, 'active', [{ status: 'in_progress' }])).toBe(false);
+    expect(canEditOrderSteps(true, 'active', [{ status: 'completed' }])).toBe(false);
+    expect(canEditOrderSteps(true, 'active', [{ status: 'upcoming', details: { started: 'now' } }])).toBe(false);
+  });
+  it('restores editing of running orders only when the configuration switch is on', () => {
+    expect(canEditOrderSteps(true, 'active', [{ status: 'in_progress' }], true)).toBe(true);
+    expect(canEditOrderSteps(true, 'completed', [{ status: 'completed' }], true)).toBe(true);
+    expect(canEditOrderSteps(false, 'active', [{ status: 'in_progress' }], true)).toBe(false);
+    expect(canEditOrderSteps(true, 'cancelled', [], true)).toBe(false);
   });
   it('moves a step without losing or changing any stage IDs', () => {
     const ids = ['proforma', 'bank_details', 'payment_in_progress'];

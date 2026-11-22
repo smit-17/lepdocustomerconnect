@@ -116,7 +116,7 @@ export default function OrdersPage() {
                       <td><PaymentBadge status={o.payment_status} /></td>
                       <td className="whitespace-nowrap text-slate-500">{timeAgo(o.updated_at)}</td>
                       <td className="text-slate-700">{o.executive_name || '—'}</td>
-                       <td className="text-right"><div className="flex items-center justify-end gap-1"><Link to={`/admin/orders/${o.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex h-8 items-center rounded-lg px-2 text-sm font-medium text-brand-indigo hover:bg-cream-100">Open</Link><DeleteOrderButton orderId={o.id} reference={o.reference} /></div></td>
+                       <td className="text-right"><div className="flex items-center justify-end gap-1"><Link to={`/admin/orders/${o.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex h-8 items-center rounded-lg px-2 text-sm font-medium text-brand-indigo hover:bg-cream-100">Open</Link><DeleteOrderButton orderId={o.id} reference={o.reference} locked={o.actions_locked !== false} /></div></td>
                     </tr>
                   ))}
                 </tbody>
@@ -136,7 +136,7 @@ export default function OrdersPage() {
                     </div>
                     <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
                   </Link>
-                   <div className="pr-4"><DeleteOrderButton orderId={o.id} reference={o.reference} /></div>
+                   <div className="pr-4"><DeleteOrderButton orderId={o.id} reference={o.reference} locked={o.actions_locked !== false} /></div>
                 </li>
               ))}
             </ul>

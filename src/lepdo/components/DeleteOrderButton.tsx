@@ -8,13 +8,13 @@ import { useAuth } from '../lib/auth';
 import { deleteOrderHistory } from '../lib/history.functions';
 import { errorMessage } from '../lib/format';
 
-export default function DeleteOrderButton({ orderId, reference, onDeleted }: { orderId: string; reference: string; onDeleted?: () => void }) {
+export default function DeleteOrderButton({ orderId, reference, locked, onDeleted }: { orderId: string; reference: string; locked: boolean; onDeleted?: () => void }) {
   const { isAdmin } = useAuth();
   const [busy, setBusy] = useState(false);
   const remove = useServerFn(deleteOrderHistory);
   const qc = useQueryClient();
   const toast = useToast();
-  if (!isAdmin) return null;
+  if (!isAdmin || locked) return null;
   return <Button variant="danger" size="sm" className="w-8 px-0" title="Delete order" aria-label={`Delete order ${reference}`} loading={busy} icon={<Trash2 className="h-4 w-4" />} onClick={async (e) => {
     e.preventDefault();
     e.stopPropagation();

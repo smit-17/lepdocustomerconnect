@@ -99,6 +99,20 @@
       "when": 1795320090572,
       "tag": "0013_admin_delete_order_history",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795323395481,
+      "tag": "0014_running_order_step_edit_configuration",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1795323529199,
+      "tag": "0015_grant_running_order_configuration_update",
+      "breakpoints": true
     }
   ]
 }

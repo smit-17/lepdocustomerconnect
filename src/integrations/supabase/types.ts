@@ -19,6 +19,7 @@ export type Database = {
           address: string | null
           company_name: string
           default_currency: string
+          edit_running_order_steps: boolean
           email: string | null
           id: number
           phone: string | null
@@ -33,6 +34,7 @@ export type Database = {
           address?: string | null
           company_name?: string
           default_currency?: string
+          edit_running_order_steps?: boolean
           email?: string | null
           id?: number
           phone?: string | null
@@ -47,6 +49,7 @@ export type Database = {
           address?: string | null
           company_name?: string
           default_currency?: string
+          edit_running_order_steps?: boolean
           email?: string | null
           id?: number
           phone?: string | null
@@ -1249,6 +1252,10 @@ export type Database = {
           role: string
           whatsapp: string
         }[]
+      }
+      assert_order_steps_editable: {
+        Args: { p_order_id: string }
+        Returns: undefined
       }
       auth_role: { Args: never; Returns: string }
       calc_payment_status: {

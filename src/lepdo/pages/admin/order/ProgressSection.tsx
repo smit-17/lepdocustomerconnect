@@ -4,7 +4,7 @@ import { ArrowDown, ArrowUp, Check, Plus, ChevronDown, Lock, Paperclip, Pencil, 
 import { Badge, Button, Card, Drawer, Field, Input, ProgressBar, Select, Textarea, Toggle, cx } from '../../../components/ui';
 import { StatusIcon } from '../../../components/StatusIcon';
 import { useToast } from '../../../components/Toast';
-import { orderKeys, uploadDocument } from '../../../lib/api';
+import { orderKeys, uploadDocument, useSettings } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { StepControls, stageHasControls } from './WorkflowSection';
 import { supabase } from '../../../lib/supabase';
@@ -25,11 +25,16 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
   /** Where a new step is being inserted: 'start', or the id of the step it goes after. */
   const [addAt, setAddAt] = useState<string | null>(null);
   const [addName, setAddName] = useState('');
-  const canEdit = canEditOrderSteps(isAdmin, order.status);
+  const settings = useSettings();
+  const canEdit = !!settings.data && canEditOrderSteps(isAdmin, order.status, stages, settings.data.edit_running_order_steps);
   const showControls = order.status === 'active';
 
+  useEffect(() => {
+    if (!canEdit) { setEditing(false); setRenameId(null); setAddAt(null); }
+  }, [canEdit]);
+
   async function mutate(fn: () => PromiseLike<{ error: unknown }>, ok: string) {
-    if (busy) return false;
+    if (busy || !canEdit) return false;
     setBusy(true);
     try {
       const { error } = await fn();
@@ -117,7 +122,7 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
               {!last && <span className={cx('absolute left-[13px] top-8 h-[calc(100%-1.75rem)] w-0.5', s.status === 'completed' ? 'bg-emerald-500/60' : 'bg-slate-200')} />}
               <StatusIcon status={s.status} current={isCurrent} />
               <div className={cx('min-w-0 flex-1 rounded-lg px-2 py-1 -mx-2 -my-1', isCurrent && 'bg-cream-50')}>
-                {editing && renameId === s.id ? (
+                {editing && canEdit && renameId === s.id ? (
                   <form className="flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); saveRename(s.id); }}>
                     <Input autoFocus aria-label="Step name" value={renameValue} maxLength={120} onChange={(e) => setRenameValue(e.target.value)} />
                     <Button size="sm" variant="indigo" type="submit" loading={busy}>Save</Button>
@@ -135,7 +140,7 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
                   <span className="ml-auto text-xs text-slate-500">{s.completed_at ? fmtDate(s.completed_at) : ''}</span>
                   <span className="text-xs font-medium text-brand-indigo opacity-0 transition group-hover:opacity-100">Update</span>
                 </button>
-                {editing && (
+                {editing && canEdit && (
                   <span className="flex shrink-0 items-center gap-0.5">
                     <Button size="sm" variant="ghost" aria-label={`Move ${s.name} up`} disabled={busy || i === 0} onClick={() => move(i, -1)} icon={<ArrowUp className="h-3.5 w-3.5" />} />
                     <Button size="sm" variant="ghost" aria-label={`Move ${s.name} down`} disabled={busy || last} onClick={() => move(i, 1)} icon={<ArrowDown className="h-3.5 w-3.5" />} />

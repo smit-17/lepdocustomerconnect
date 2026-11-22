@@ -1,3 +1,5 @@
+- [x] Add default-off Configuration override for editing running order steps; verified initial editing, running-order lock, rejected direct rename, saved override, successful insertion and restored off state.
+- [x] Hide Reopen, Cancel and Delete on completed orders and completed shipping handovers; verified both cases and removed the temporary order.
 - [x] Add administrator order deletion and Reset History, preserving customer records and accounts.
 - [x] Verify temporary order deletion, reset confirmation, mobile controls and focused permission tests; full reset not executed against existing data.
 - [x] Apply latest ZIP add-step controls with secure insertion and existing safeguards.

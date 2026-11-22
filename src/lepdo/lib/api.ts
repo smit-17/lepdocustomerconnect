@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase, DOCS_BUCKET } from './supabase';
 import { cleanSearch } from './format';
-import { DOC_TYPES } from './workflows';
+import { DOC_TYPES, orderActionsLocked } from './workflows';
 import { changeTeamEmail, inviteUser, type InviteInput } from './invite.functions';
 import type { AppSettings, CustomerListRow, Doc, OrderListRow, OrderUpdate, Payment, PortalHome, PortalOrder, Profile, Shipment, Stage } from './types';
 
@@ -99,7 +99,13 @@ export function useOrders(f: OrderFilters) {
       if (f.attention === 'dispatch') q = q.eq('current_stage_key', 'ready_to_ship');
       const s = cleanSearch(f.search || '');
       if (s) q = q.or(`reference.ilike.%${s}%,customer_name.ilike.%${s}%,title.ilike.%${s}%,customer_po_ref.ilike.%${s}%`);
-      return run<OrderListRow[]>(q);
+      const orders = await run<OrderListRow[]>(q);
+      if (!orders.length) return orders;
+      const handovers = await run<Pick<Stage, 'order_id' | 'stage_key' | 'status'>[]>(
+        supabase.from('order_stages').select('order_id,stage_key,status').in('order_id', orders.map(o => o.id)).eq('stage_key', 'shipped').eq('status', 'completed').gt('journey_position', 0),
+      );
+      const handedOver = new Set(handovers.map(s => s.order_id));
+      return orders.map(o => ({ ...o, actions_locked: orderActionsLocked(o.status, handedOver.has(o.id) ? [{ stage_key: 'shipped', status: 'completed' }] : []) }));
     },
     placeholderData: (prev) => prev,
   });

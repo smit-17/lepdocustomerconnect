@@ -76,6 +76,7 @@ export interface Order {
 }
 
 export interface OrderListRow extends Order {
+  actions_locked?: boolean;
   customer_name: string;
   customer_country: string;
   executive_id: string;
@@ -166,6 +167,7 @@ export interface AppSettings {
   address: string | null;
   default_currency: string;
   team_sees_all: boolean;
+  edit_running_order_steps: boolean;
 }
 
 export interface Executive {

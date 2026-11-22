@@ -161,6 +161,11 @@ export function journeyProgress(stages: { stage_key: string; status: StageStatus
   return required.length ? Math.round(100 * required.filter(s => s.status === 'completed').length / required.length) : 0;
 }
 
+/** Hide lifecycle actions until stages are known, or after completion/handover. */
+export function orderActionsLocked(status: string, stages?: readonly { stage_key: string; status: StageStatus }[]) {
+  return status === 'completed' || !stages || stages.some(s => s.stage_key === 'shipped' && s.status === 'completed');
+}
+
 export const CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'AED', 'HKD', 'AUD', 'CAD', 'SGD', 'CHF', 'JPY'];
 
 export type Tone = 'grey' | 'green' | 'amber' | 'red' | 'blue' | 'indigo' | 'orange' | 'cream';
@@ -173,9 +178,10 @@ export const COUNTRIES = [
 ];
 
 export const REJECTION_REASONS = ['Design alteration needed', 'Dimensions mismatch', 'Stone setting revision', 'Finish defect', 'Other'];
-/** Step editing is reserved for administrators on non-cancelled orders. */
-export function canEditOrderSteps(isAdmin: boolean, status: string) {
-  return isAdmin && status !== 'cancelled';
+/** Any recorded progress starts an order; the configuration override is opt-in. */
+export function canEditOrderSteps(isAdmin: boolean, status: string, stages: readonly { status: StageStatus; completed_at?: string | null; details?: Record<string, string> }[] = [], allowRunning = false) {
+  const started = status === 'completed' || stages.some(s => !['upcoming', 'not_applicable'].includes(s.status) || !!s.completed_at || Object.keys(s.details ?? {}).length > 0);
+  return isAdmin && status !== 'cancelled' && (!started || allowRunning);
 }
 
 export function moveStageIds(ids: string[], index: number, direction: -1 | 1): string[] | null {
