@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { Logo } from '../../components/ui';
-import { isDemoMode } from '../../lib/supabase';
 
 export default function AuthShell({ children }: { children: ReactNode }) {
   return (
@@ -22,11 +21,6 @@ export default function AuthShell({ children }: { children: ReactNode }) {
             <Logo className="h-8" />
             <p className="mt-3 text-sm text-slate-500">Every Order. Every Step. Connected.</p>
           </div>
-          {isDemoMode && (
-            <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              <strong>Demo environment.</strong> Contains demonstration data only. See README for demo logins.
-            </div>
-          )}
           {children}
         </div>
       </main>

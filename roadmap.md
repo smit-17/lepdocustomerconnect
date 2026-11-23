@@ -1,3 +1,6 @@
+- [x] Remove demo sign-in content; update the existing administrator through Auth without changing its ID, permissions or profile; verify Settings password changes and canonical profile email.
+- [x] Delete the four user-confirmed test orders, their files, demo company, and demo Executive/Customer accounts; preserve the existing administrator.
+- [ ] Enable/confirm Secure email change in More → Users → Auth settings → Email, then verify old/new mailbox links; blocked by the user-managed setting and mailbox access.
 - [x] Reuse existing customer portal/profile/order views for secure read-only customer shares; verified real staff generation, signed-out mobile/desktop access, customer isolation, live updates, revocation, token replacement and unchanged normal customer login.
 - [x] Generate tracking links on the customer Vercel domain; preserve the public route, narrow token-based read access and existing interface.
 - [ ] Redeploy the updated shared-profile app on Vercel and verify live customer sharing; blocked by external deployment access (live tracking path now responds, but this updated version needs deployment).

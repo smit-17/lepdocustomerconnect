@@ -35,8 +35,8 @@ use the editor.
 - src/lepdo/lib/supabase.ts re-exports the shared client untyped; hand-written row types live in src/lepdo/lib/types.ts.
 - Customer data is read only through portal_* security-definer functions; customers have no direct table access.
 - Invitations run through the inviteUser server function (src/lepdo/lib/invite.functions.ts), not an edge function.
-- The first account ever created becomes admin (handle_new_user trigger); signup is disabled, accounts come from invites or Cloud > Users.
-- Demo buttons use ordinary password sign-in against pre-created accounts; never add a public provisioning endpoint. Why: demo access must not expose privileged account creation.
+- The first account ever created becomes admin (handle_new_user trigger); public signup creates only customer accounts with their own customer record (self_signup metadata); staff come only from invites.
+- Production sign-in has no demo credentials or provisioning endpoints. Why: shared demo access must not grant production privileges.
 - Customer uploads and approvals use authenticated portal RPCs with ownership validation; KYC uses private storage. Why: customers must never write staff records directly.
 - Order journey ordering uses journey_position while legacy position stays immutable; feedback is optional and excluded from progress. Why: extend existing orders without losing history.
 - Staff workflow controls live inside their corresponding progress steps; admin step edits use validated RPCs, insertion assigns a unique custom key and immutable legacy position, and removal sets journey_position to zero. Why: keep controls contextual and preserve historical records.
@@ -51,3 +51,4 @@ use the editor.
 - Generate customer tracking URLs through the shared validated URL helper, never the browser origin. Why: preview access restrictions must not affect customer links.
 - Workflow definitions use stable stage/field keys and per-order ui_schema; administrator RPCs apply universal templates by type or individual snapshots independently of the legacy running-order switch. Why: preserve status, timestamps, detail values and historical records when definitions change.
 - Empty business fields use safe defaults or unconfirmed drafts; blank orders use a per-executive unassigned customer, while authentication, ownership and received-payment checks remain enforced. Why: allow incomplete records without weakening access or balances.
+- Account email changes use Auth confirmation and profiles derive email only from the canonical Auth identity; signed-in password changes require the current password. Why: prevent unverified identity changes while preserving recovery links.

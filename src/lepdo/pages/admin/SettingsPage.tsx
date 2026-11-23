@@ -14,6 +14,7 @@ import { WorkflowEditor } from '../../components/WorkflowEditor';
 import { workflowDefinition, type WorkflowDefinition } from '../../lib/workflow-editor';
 import type { OrderType } from '../../lib/types';
 import ResetHistoryButton from '../../components/ResetHistoryButton';
+import { passwordChangeError } from '../../lib/account';
 
 type Tab = 'company' | 'team' | 'invitations' | 'account' | 'configuration';
 
@@ -372,15 +373,26 @@ function AccountSettings() {
   const toast = useToast();
   const qc = useQueryClient();
   const [f, setF] = useState({ full_name: '', job_title: '', phone: '', whatsapp: '' });
-  const [pw, setPw] = useState({ a: '', b: '' });
+  const [email, setEmail] = useState('');
+  const [emailNotice, setEmailNotice] = useState<string | null>(null);
+  const [pw, setPw] = useState({ current: '', a: '', b: '' });
   const [busy, setBusy] = useState<string | null>(null);
   useEffect(() => { if (profile) setF({ full_name: profile.full_name, job_title: profile.job_title || '', phone: profile.phone || '', whatsapp: profile.whatsapp || '' }); }, [profile]);
+  useEffect(() => { setEmail(session?.user.email || ''); }, [session?.user.email]);
   if (!profile) return null;
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (!profile) return;
+    if (!profile || busy) return;
     setBusy('profile');
+    const address = email.trim().toLowerCase();
+    const { data: verified, error: authError } = await supabase.auth.getUser();
+    if (authError || !verified.user) { setBusy(null); return toast.error('Please sign in again.'); }
+    if (address !== verified.user.email?.toLowerCase()) {
+      const { error: emailError } = await supabase.auth.updateUser({ email: address }, { emailRedirectTo: `${window.location.origin}/login` });
+      if (emailError) { setBusy(null); return toast.error(emailError.message); }
+      setEmailNotice('Confirm the email change using the links sent to your current and new email addresses. Your current login remains active until confirmation is complete.');
+    }
     const { error } = await supabase.from('profiles').update({ full_name: f.full_name.trim(), job_title: f.job_title.trim() || null, phone: f.phone.trim() || null, whatsapp: f.whatsapp.trim() || null }).eq('id', profile.id);
     setBusy(null);
     if (error) return toast.error(errorMessage(error));
@@ -410,13 +422,14 @@ function AccountSettings() {
 
   async function changePassword(e: FormEvent) {
     e.preventDefault();
-    if (pw.a.length < 8) return toast.error('Use at least 8 characters.');
-    if (pw.a !== pw.b) return toast.error('Passwords do not match.');
+    if (busy) return;
+    const validation = passwordChangeError(pw.current, pw.a, pw.b);
+    if (validation) return toast.error(validation);
     setBusy('pw');
-    const { error } = await supabase.auth.updateUser({ password: pw.a });
+    const { error } = await supabase.auth.updateUser({ password: pw.a, current_password: pw.current });
     setBusy(null);
     if (error) return toast.error(error.message);
-    setPw({ a: '', b: '' });
+    setPw({ current: '', a: '', b: '' });
     toast.success('Password changed');
   }
 
@@ -432,7 +445,8 @@ function AccountSettings() {
         </div>
         <form onSubmit={save} className="space-y-4">
           <Field label="Full name"><Input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} maxLength={120} /></Field>
-          <Field label="Email"><Input value={session?.user.email || ''} disabled /></Field>
+          <Field label="Email"><Input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+          {emailNotice && <p role="status" className="text-sm text-muted-foreground">{emailNotice}</p>}
           <Field label="Job title" hint="Shown to your customers."><Input value={f.job_title} onChange={(e) => setF({ ...f, job_title: e.target.value })} maxLength={120} /></Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Phone"><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
@@ -443,6 +457,7 @@ function AccountSettings() {
       </Card>
       <Card title="Change password">
         <form onSubmit={changePassword} className="space-y-4">
+          <Field label="Current password"><Input type="password" autoComplete="current-password" required value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} /></Field>
           <Field label="New password"><Input type="password" autoComplete="new-password" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value })} /></Field>
           <Field label="Confirm password"><Input type="password" autoComplete="new-password" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} /></Field>
           <Button type="submit" loading={busy === 'pw'}>Update password</Button>

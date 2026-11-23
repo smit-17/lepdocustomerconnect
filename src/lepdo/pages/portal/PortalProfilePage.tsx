@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { errorMessage, fmtDate } from '../../lib/format';
 import { getKyc, KYC_MAX_BYTES, previewKyc, uploadCustomerFile } from '../../lib/portal-management';
+import { passwordChangeError } from '../../lib/account';
 
 export default function PortalProfilePage() {
   const { data, isLoading, error } = usePortalHome();
@@ -18,7 +19,7 @@ export default function PortalProfilePage() {
   const customerId = data?.customer.id || '';
   const kyc = useQuery({ queryKey: ['kyc', customerId], queryFn: () => getKyc(customerId), enabled: !!customerId });
   const record = kyc.data?.[0];
-  const [pw, setPw] = useState({ a: '', b: '' });
+  const [pw, setPw] = useState({ current: '', a: '', b: '' });
   const [busy, setBusy] = useState<string | null>(null);
 
   if (isLoading) return <PageLoader />;
@@ -41,13 +42,14 @@ export default function PortalProfilePage() {
 
   async function changePw(e: FormEvent) {
     e.preventDefault();
-    if (pw.a.length < 8) return toast.error('Use at least 8 characters.');
-    if (pw.a !== pw.b) return toast.error('Passwords do not match.');
+    if (busy) return;
+    const validation = passwordChangeError(pw.current, pw.a, pw.b);
+    if (validation) return toast.error(validation);
     setBusy('pw');
-    const { error } = await supabase.auth.updateUser({ password: pw.a });
+    const { error } = await supabase.auth.updateUser({ password: pw.a, current_password: pw.current });
     setBusy(null);
     if (error) return toast.error(error.message);
-    setPw({ a: '', b: '' });
+    setPw({ current: '', a: '', b: '' });
     toast.success('Password updated');
   }
 
@@ -72,6 +74,7 @@ export default function PortalProfilePage() {
         <section className="rounded-2xl border border-cream-200 bg-white p-5 sm:p-6">
           <h2 className="mb-4 text-[15px] font-semibold text-brand-indigo">Password</h2>
           <form onSubmit={changePw} className="space-y-4">
+            <Field label="Current password"><Input type="password" autoComplete="current-password" required value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} /></Field>
             <Field label="New password"><Input type="password" autoComplete="new-password" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value })} /></Field>
             <Field label="Confirm password"><Input type="password" autoComplete="new-password" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} /></Field>
             <Button type="submit" loading={busy === 'pw'}>Update password</Button>
