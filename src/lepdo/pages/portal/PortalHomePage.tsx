@@ -8,10 +8,10 @@ import { usePortalHome } from '../../lib/api';
 import { fmtDate, money, timeAgo } from '../../lib/format';
 import type { PortalOrderCard } from '../../lib/types';
 
-function OrderCard({ o }: { o: PortalOrderCard }) {
+function OrderCard({ o, readOnly = false, onOrder, sharePath }: { o: PortalOrderCard; readOnly?: boolean; onOrder?: (id: string) => void; sharePath?: string }) {
   const done = o.status === 'completed';
   return (
-    <Link to={`/portal/orders/${o.id}`} className="group flex flex-col rounded-2xl border border-cream-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-brand-orange/40 hover:shadow-card">
+    <Link to={sharePath || `/portal/orders/${o.id}`} onClick={onOrder ? e => { e.preventDefault(); onOrder(o.id); } : undefined} className="group flex flex-col rounded-2xl border border-cream-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-brand-orange/40 hover:shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px] font-semibold tracking-wide text-brand-indigo">{o.reference}</p>
@@ -31,7 +31,7 @@ function OrderCard({ o }: { o: PortalOrderCard }) {
       <ProgressBar value={o.progress_pct} className="mt-2" />
 
       <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div><dt className="text-xs text-slate-500">Order amount</dt><dd className="font-medium tabular-nums text-slate-800">{money(o.total_amount, o.currency)}</dd></div>
+        {!readOnly && <div><dt className="text-xs text-slate-500">Order amount</dt><dd className="font-medium tabular-nums text-slate-800">{money(o.total_amount, o.currency)}</dd></div>}
         <div>
           <dt className="text-xs text-slate-500">{done ? 'Completed' : 'Expected delivery'}</dt>
           <dd className="font-medium text-slate-800">{done ? fmtDate(o.completed_at) : o.expected_delivery_date ? fmtDate(o.expected_delivery_date) : 'To be confirmed'}</dd>
@@ -50,11 +50,15 @@ function OrderCard({ o }: { o: PortalOrderCard }) {
 }
 
 export default function PortalHomePage() {
-  const [activeLimit, setActiveLimit] = useState(6);
-  const [completedLimit, setCompletedLimit] = useState(6);
   const { data, isLoading, error } = usePortalHome();
   if (isLoading) return <PageLoader />;
   if (error || !data) return <ErrorNote error={error} />;
+  return <PortalHomeView data={data} />;
+}
+
+export function PortalHomeView({ data, readOnly = false, onOrder, sharePath }: { data: import('../../lib/types').PortalHome; readOnly?: boolean; onOrder?: (id: string) => void; sharePath?: string }) {
+  const [activeLimit, setActiveLimit] = useState(6);
+  const [completedLimit, setCompletedLimit] = useState(6);
   const active = data.orders.filter((o) => o.status === 'active');
   const completed = data.orders.filter((o) => o.status === 'completed');
   const name = data.me?.full_name || data.customer.contact_person || data.customer.name;
@@ -67,7 +71,7 @@ export default function PortalHomePage() {
           <h1 className="mt-2 text-[28px] font-semibold leading-tight tracking-tight text-brand-indigo sm:text-4xl">Every Order. Every Step. Connected.</h1>
           <p className="mt-3 text-[15px] text-slate-600">Welcome, <span className="font-medium text-slate-900">{name}</span>{name !== data.customer.name && <> · {data.customer.name}</>}</p>
         </div>
-        <ExecutiveCard exec={data.executive} compact />
+        {!readOnly && <ExecutiveCard exec={data.executive} compact />}
       </section>
 
       <dl className="mt-8 grid grid-cols-3 gap-4 border-y border-cream-200 py-5">
@@ -85,7 +89,7 @@ export default function PortalHomePage() {
             <p className="mt-1 text-sm text-slate-500">New orders from LEPDO will appear here automatically.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{active.slice(0, activeLimit).map((o) => <OrderCard key={o.id} o={o} />)}</div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{active.slice(0, activeLimit).map((o) => <OrderCard key={o.id} o={o} readOnly={readOnly} {...(onOrder ? { onOrder } : {})} {...(sharePath ? { sharePath } : {})} />)}</div>
         )}
         {active.length > activeLimit && <Button className="mt-4" onClick={() => setActiveLimit(n => n + 6)}>Load More</Button>}
       </section>
@@ -98,7 +102,7 @@ export default function PortalHomePage() {
         {completed.length === 0 ? (
           <p className="flex items-center gap-2 text-sm text-slate-500"><CalendarClock className="h-4 w-4" /> Delivered orders will be kept here for your records.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{completed.slice(0, completedLimit).map((o) => <OrderCard key={o.id} o={o} />)}</div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{completed.slice(0, completedLimit).map((o) => <OrderCard key={o.id} o={o} readOnly={readOnly} {...(onOrder ? { onOrder } : {})} {...(sharePath ? { sharePath } : {})} />)}</div>
         )}
         {completed.length > completedLimit && <Button className="mt-4" onClick={() => setCompletedLimit(n => n + 6)}>Load More</Button>}
       </section>

@@ -127,6 +127,34 @@
       "when": 1795413493208,
       "tag": "0017_secure_order_tracking_links",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795426164574,
+      "tag": "0018_shared_customer_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795428997100,
+      "tag": "0019_customizable_order_workflows",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795429170272,
+      "tag": "0020_complete_optional_workflow_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795429285581,
+      "tag": "0021_restrict_workflow_initialization",
+      "breakpoints": true
     }
   ]
 }

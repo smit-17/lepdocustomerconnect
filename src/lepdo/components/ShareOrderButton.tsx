@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Share2 } from 'lucide-react';
+import { Copy, Share2, Link2Off } from 'lucide-react';
 import { Button, Drawer, Input } from './ui';
 import { useToast } from './Toast';
 import { run } from '../lib/api';
@@ -29,6 +29,15 @@ export default function ShareOrderButton({ orderId }: { orderId: string }) {
         try { await navigator.clipboard.writeText(url); toast.success('Tracking link copied'); }
         catch { toast.error('Select the link to copy it.'); }
       }}>Copy link</Button>
+      <Button className="ml-3 mt-3" loading={busy} icon={<Link2Off className="h-4 w-4" />} onClick={async () => {
+        if (!window.confirm('Revoke this shared customer link? Anyone with this link will lose access.')) return;
+        setBusy(true);
+        try {
+          await run(supabase.rpc('staff_revoke_order_share', { p_order_id: orderId }));
+          setUrl(''); setOpen(false); toast.success('Shared link revoked');
+        } catch (error) { toast.error(errorMessage(error)); }
+        finally { setBusy(false); }
+      }}>Revoke link</Button>
     </Drawer>
   </>;
 }

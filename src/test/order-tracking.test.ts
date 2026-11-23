@@ -3,7 +3,7 @@ import { customerTrackingUrl, trackingOrder, trackingToken } from '@/lepdo/lib/t
 
 describe('Public order tracking', () => {
   it('always shares the live Vercel tracking address, never the preview origin', () => {
-    expect(customerTrackingUrl('a'.repeat(64))).toBe(`https://lepdocustomerconnect.vercel.app/track/${'a'.repeat(64)}`);
+    expect(customerTrackingUrl('a'.repeat(64))).toBe(`https://lepdocustomerconnect.vercel.app/portal-share/${'a'.repeat(64)}`);
     expect(() => customerTrackingUrl('../admin')).toThrow();
   });
   it('requires a secure 64-character link rather than an order ID', () => {

@@ -1,3 +1,4 @@
+import { optionalPaymentAmount, schemaForStage } from '../../lib/workflow-editor';
 import { useCallback, useState, type ReactNode } from 'react';
 import { Link, useParams } from '@/lepdo/router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,7 +10,7 @@ import { useToast } from '../../components/Toast';
 import { keys, openDocument, usePortalOrder } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
 import { errorMessage, fileSize, fmtDate, money, timeAgo } from '../../lib/format';
-import { DOC_TYPES, INVOICE_DOC_TYPES, PAYMENT_STATUS, PAYMENT_TYPES, SHIPMENT_STATUS, STAGE_STATUS, stageDetails, journeyProgress, docTypeForStage } from '../../lib/workflows';
+import { DOC_TYPES, INVOICE_DOC_TYPES, PAYMENT_STATUS, PAYMENT_TYPES, SHIPMENT_STATUS, STAGE_STATUS, journeyProgress, docTypeForStage } from '../../lib/workflows';
 import { DocumentViewerModal, type ViewerFile } from '../../components/DocumentViewerModal';
 import { ApprovalBlock } from './ApprovalBlock';
 import { uploadCustomerFile, PROOF_MAX_BYTES } from '../../lib/portal-management';
@@ -39,7 +40,7 @@ export default function PortalOrderPage() {
   return <OrderView d={data} />;
 }
 
-function OrderView({ d }: { d: PortalOrder }) {
+export function OrderView({ d, readOnly = false, onBack, sharePath }: { d: PortalOrder; readOnly?: boolean; onBack?: () => void; sharePath?: string }) {
   const toast = useToast();
   const o = d.order;
   const done = o.status === 'completed';
@@ -81,7 +82,7 @@ function OrderView({ d }: { d: PortalOrder }) {
 
   return (
     <div className="overflow-x-hidden">
-      <Link to="/portal" className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-indigo"><ArrowLeft className="h-4 w-4" /> My orders</Link>
+      <Link to={sharePath || "/portal"} onClick={onBack ? e => { e.preventDefault(); onBack(); } : undefined} className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-indigo"><ArrowLeft className="h-4 w-4" /> My orders</Link>
 
       {/* Title */}
       <div className="flex flex-wrap items-center gap-2">
@@ -92,14 +93,14 @@ function OrderView({ d }: { d: PortalOrder }) {
       </div>
       <p className="mt-1 text-[15px] text-slate-700">{o.title}{o.customer_po_ref && <span className="text-slate-500"> · PO {o.customer_po_ref}</span>}</p>
 
-      <section className="mt-6 border-y border-cream-200 py-5">
+      {!readOnly && <section className="mt-6 border-y border-cream-200 py-5">
         <h2 className="text-lg font-semibold text-brand-indigo">What Happens Next?</h2>
         <p className="mt-2 text-sm font-medium">{nextAction}</p>
         <dl className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
           <div><dt className="text-xs text-muted-foreground">Responsible department</dt><dd>{department}</dd></div>
           <div><dt className="text-xs text-muted-foreground">Your action</dt><dd>{d.extra.customer_action_required || (done ? 'Optional feedback' : pendingApproval ? `Approve or request changes (version ${pendingApproval.version})` : pendingPayment ? 'No action — payment submitted for verification' : latestCad && !cadApproved ? 'Approve the latest CAD design' : 'No action required')}</dd></div>
         </dl>
-      </section>
+      </section>}
       {/* Status hero — understandable in five seconds */}
       <section className="mt-6 overflow-hidden rounded-2xl border border-cream-200 bg-white">
         <div className="p-5 sm:p-7">
@@ -119,7 +120,7 @@ function OrderView({ d }: { d: PortalOrder }) {
             <span className="shrink-0 text-sm font-semibold tabular-nums text-brand-indigo">{progress}%</span>
           </div>
           <div className="mt-5 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
-            <div><p className="text-xs text-slate-500">Order amount</p><p className="font-semibold tabular-nums text-slate-900">{money(total, d.payment.currency)}</p></div>
+            {!readOnly && <div><p className="text-xs text-slate-500">Order amount</p><p className="font-semibold tabular-nums text-slate-900">{money(total, d.payment.currency)}</p></div>}
             <div><p className="text-xs text-slate-500">Expected delivery</p><p className="font-semibold text-slate-900">{o.expected_delivery_date ? fmtDate(o.expected_delivery_date) : activeShipment?.estimated_delivery_date ? fmtDate(activeShipment.estimated_delivery_date) : 'To be confirmed'}</p></div>
             <div className="col-span-2 sm:col-span-1"><p className="text-xs text-slate-500">Last update</p><p className="font-semibold text-slate-900">{timeAgo(o.updated_at)}</p></div>
           </div>
@@ -140,13 +141,13 @@ function OrderView({ d }: { d: PortalOrder }) {
         )}
       </section>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+      <div className={cx("mt-6 grid grid-cols-1 gap-6", !readOnly && "lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]")}>
         {/* Journey */}
         <Panel title="Order journey">
           <ol>
             {stages.map((s, i) => {
               const isCurrent = !done && s.stage_key === o.current_stage_key && s.status !== 'completed';
-              const ticked = stageDetails(o.order_type, s.stage_key).filter((x) => s.details?.[x.key]);
+              const ticked = schemaForStage(o.order_type, s).fields.filter((x) => s.details?.[x.key]);
               const last = i === stages.length - 1;
               return (
                 <li key={s.id} className="relative flex gap-4 pb-6 last:pb-0">
@@ -162,19 +163,20 @@ function OrderView({ d }: { d: PortalOrder }) {
                     )}
                     {expanded[s.id] && <>
                     <p className="mt-2 text-xs text-muted-foreground">{s.completed_at ? `Completed ${fmtDate(s.completed_at)}` : STAGE_STATUS[s.status].customerLabel}</p>
+                    {s.ui_schema?.description && <p className="mt-1 text-sm text-muted-foreground">{s.ui_schema.description}</p>}
                     {s.customer_note && <p className="mt-1 text-sm text-slate-600">{s.customer_note}</p>}
                     {ticked.length > 0 && (
                       <ul className="mt-1.5 flex flex-wrap gap-1.5">
-                        {ticked.map((t) => <li key={t.key} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-800"><Check className="h-3 w-3" />{t.label}</li>)}
+                        {ticked.map((t) => <li key={t.key} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-800"><Check className="h-3 w-3" />{t.label}{t.type !== 'checkbox' ? `: ${s.details[t.key]}` : ''}</li>)}
                       </ul>
                     )}
                     <div className="mt-3 space-y-2">
                       {d.documents.filter(doc => d.extra.stage_documents.some(link => link.stage_id === s.id && link.document_id === doc.id) || doc.doc_type === docTypeForStage(s.stage_key)).map(doc => <Button key={doc.id} variant="ghost" className="max-w-full whitespace-normal text-left" icon={<FileText className="h-4 w-4 shrink-0" />} onClick={() => setViewing({ path: doc.storage_path, name: doc.name, mime: doc.mime_type })}>{doc.name}</Button>)}
-                      {approvals.some(a => a.stage_key === s.stage_key) && <ApprovalBlock orderId={o.id} approvals={approvals.filter(a => a.stage_key === s.stage_key)} canAct={!done} onView={setViewing} />}
+                      {approvals.some(a => a.stage_key === s.stage_key) && <ApprovalBlock orderId={o.id} approvals={approvals.filter(a => a.stage_key === s.stage_key)} canAct={!done && !readOnly} onView={setViewing} />}
                       {s.stage_key === 'manufacturing' && (d.extra.metal_supplies || []).map((m, i) => <p key={i} className="text-xs text-slate-600">Metal supply: {m.metal_type} {m.metal_purity || ''} {m.metal_weight ? `· ${m.metal_weight} g` : ''} · {m.status}</p>)}
                       {s.stage_key === 'quality_check' && d.extra.photography && <p className="text-xs text-slate-600">Photography: {d.extra.photography.status.replace('_', ' ')}</p>}
-                      {s.stage_key === 'cad_approval' && latestCad && !approvals.some(a => a.stage_key === 'cad_approval') && <Button variant="indigo" loading={busy} disabled={cadApproved || done} onClick={approveCad}>{cadApproved ? 'CAD approved' : 'Approve CAD design'}</Button>}
-                      {['payment_in_progress','advance_payment','final_payment'].includes(s.stage_key) && !done && <PaymentProof orderId={o.id} />}
+                      {!readOnly && s.stage_key === 'cad_approval' && latestCad && !approvals.some(a => a.stage_key === 'cad_approval') && <Button variant="indigo" loading={busy} disabled={cadApproved || done} onClick={approveCad}>{cadApproved ? 'CAD approved' : 'Approve CAD design'}</Button>}
+                      {!readOnly && ['payment_in_progress','advance_payment','final_payment'].includes(s.stage_key) && !done && <PaymentProof orderId={o.id} />}
                     </div>
                     </>}
                   </div>
@@ -184,7 +186,7 @@ function OrderView({ d }: { d: PortalOrder }) {
           </ol>
         </Panel>
 
-        <div className="space-y-6">
+        {!readOnly && <div className="space-y-6">
           <Panel title="Invoices">
             <ul className="space-y-3">
               {(['proforma_invoice', 'final_invoice'] as const).map(t => {
@@ -286,7 +288,7 @@ function OrderView({ d }: { d: PortalOrder }) {
 
           <ExecutiveCard exec={d.executive} orderRef={o.reference} />
           {done && <Feedback orderId={o.id} rating={o.feedback_rating} comment={o.feedback_comment} />}
-        </div>
+        </div>}
       </div>
 
       {d.updates.length > 1 && (
@@ -318,9 +320,8 @@ function Feedback({ orderId, rating, comment }: { orderId: string; rating: numbe
   const toast = useToast();
 
   async function submit() {
-    if (!r) return toast.error('Choose a rating first.');
     setBusy(true);
-    const { error } = await supabase.rpc('portal_submit_feedback', { p_order_id: orderId, p_rating: r, p_comment: c || null });
+    const { error } = await supabase.rpc('portal_submit_feedback', { p_order_id: orderId, p_rating: r || null, p_comment: c || null });
     setBusy(false);
     if (error) return toast.error(errorMessage(error));
     setSaved(true);
@@ -353,11 +354,12 @@ function PaymentProof({ orderId }: { orderId: string }) {
   const qc = useQueryClient();
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!file || !Number.isFinite(Number(amount)) || Number(amount) <= 0) return toast.error('Enter an amount greater than zero and attach payment proof.');
+    let paymentAmount: number;
+    try { paymentAmount = optionalPaymentAmount(amount); } catch (e) { return toast.error(errorMessage(e)); }
     setBusy(true);
     try {
-      const path = await uploadCustomerFile('order-documents', `${orderId}/customer-proof`, file, PROOF_MAX_BYTES);
-      const { error } = await supabase.rpc('portal_submit_payment', { p_order_id: orderId, p_path: path, p_name: file.name.slice(0, 200), p_amount: Number(amount), p_reference: reference || null });
+      const path = file ? await uploadCustomerFile('order-documents', `${orderId}/customer-proof`, file, PROOF_MAX_BYTES) : null;
+      const { error } = await supabase.rpc('portal_submit_payment', { p_order_id: orderId, p_path: path, p_name: file?.name.slice(0, 200) ?? '', p_amount: paymentAmount, p_reference: reference || null });
       if (error) throw error;
       setAmount(''); setReference(''); setFile(null);
       await qc.invalidateQueries({ queryKey: keys.portalOrder(orderId) });
@@ -368,9 +370,9 @@ function PaymentProof({ orderId }: { orderId: string }) {
   }
   return <details className="mt-4 border-t border-cream-200 pt-3"><summary className="cursor-pointer text-sm font-semibold text-brand-indigo">Upload payment proof</summary>
     <form onSubmit={submit} className="mt-3 space-y-3">
-      <Field label="Payment amount"><Input type="number" min="0.01" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required /></Field>
+      <Field label="Payment amount"><Input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} /></Field>
       <Field label="Payment reference"><Input value={reference} onChange={e => setReference(e.target.value)} maxLength={120} /></Field>
-      <Field label="Screenshot or bank slip"><Input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} required /></Field>
+      <Field label="Screenshot or bank slip"><Input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} /></Field>
       <Button type="submit" variant="indigo" loading={busy}>Submit payment proof</Button>
     </form>
   </details>;

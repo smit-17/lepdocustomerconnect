@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { canEditOrderSteps, moveStageIds, validateNewStageName } from '@/lepdo/lib/workflows';
 
 describe('Uploaded order-step changes', () => {
-  it('requires a trimmed new step name of 1 to 120 characters', () => {
+  it('allows blank names with a safe default and limits supplied names to 120 characters', () => {
     expect(validateNewStageName('  Inspection  ')).toBe('Inspection');
     expect(validateNewStageName('A')).toBe('A');
     expect(validateNewStageName('A'.repeat(120))).toHaveLength(120);
-    expect(() => validateNewStageName('   ')).toThrow();
+    expect(validateNewStageName('   ')).toBe('Untitled step');
     expect(() => validateNewStageName('A'.repeat(121))).toThrow();
   });
   it('allows only administrators to edit steps', () => {

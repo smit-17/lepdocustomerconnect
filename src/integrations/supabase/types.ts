@@ -108,6 +108,39 @@ export type Database = {
           },
         ]
       }
+      customer_portal_shares: {
+        Row: {
+          customer_id: string
+          revoked_at: string | null
+          token: string
+        }
+        Insert: {
+          customer_id: string
+          revoked_at?: string | null
+          token: string
+        }
+        Update: {
+          customer_id?: string
+          revoked_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_shares_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customer_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_shares_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -119,6 +152,7 @@ export type Database = {
           email: string
           id: string
           internal_notes: string | null
+          is_unassigned: boolean
           last_activity_at: string
           name: string
           phone: string | null
@@ -136,6 +170,7 @@ export type Database = {
           email: string
           id?: string
           internal_notes?: string | null
+          is_unassigned?: boolean
           last_activity_at?: string
           name: string
           phone?: string | null
@@ -153,6 +188,7 @@ export type Database = {
           email?: string
           id?: string
           internal_notes?: string | null
+          is_unassigned?: boolean
           last_activity_at?: string
           name?: string
           phone?: string | null
@@ -463,6 +499,7 @@ export type Database = {
           position: number
           stage_key: string
           status: string
+          ui_schema: Json | null
           updated_at: string
           updated_by: string | null
         }
@@ -478,6 +515,7 @@ export type Database = {
           position: number
           stage_key: string
           status?: string
+          ui_schema?: Json | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -493,6 +531,7 @@ export type Database = {
           position?: number
           stage_key?: string
           status?: string
+          ui_schema?: Json | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -522,18 +561,38 @@ export type Database = {
       }
       order_tracking_links: {
         Row: {
+          customer_id: string | null
           order_id: string
+          revoked_at: string | null
           token: string
         }
         Insert: {
+          customer_id?: string | null
           order_id: string
+          revoked_at?: string | null
           token: string
         }
         Update: {
+          customer_id?: string | null
           order_id?: string
+          revoked_at?: string | null
           token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "order_tracking_links_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_tracking_links_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "order_tracking_links_order_id_fkey"
             columns: ["order_id"]
@@ -1131,6 +1190,24 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_templates: {
+        Row: {
+          definition: Json
+          order_type: string
+          updated_at: string
+        }
+        Insert: {
+          definition: Json
+          order_type: string
+          updated_at?: string
+        }
+        Update: {
+          definition?: Json
+          order_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       customer_list: {
@@ -1265,6 +1342,15 @@ export type Database = {
         Args: { p_confirmation?: string; p_order_id?: string }
         Returns: Json
       }
+      admin_get_workflow: { Args: { p_type: string }; Returns: Json }
+      admin_save_order_workflow: {
+        Args: { p_definition: Json; p_order_id: string }
+        Returns: undefined
+      }
+      admin_save_workflow: {
+        Args: { p_definition?: Json; p_reset?: boolean; p_type: string }
+        Returns: undefined
+      }
       admin_user_directory: {
         Args: never
         Returns: {
@@ -1282,6 +1368,10 @@ export type Database = {
           role: string
           whatsapp: string
         }[]
+      }
+      apply_order_workflow: {
+        Args: { p_definition: Json; p_order_id: string }
+        Returns: undefined
       }
       assert_order_steps_editable: {
         Args: { p_order_id: string }
@@ -1302,6 +1392,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       my_customer_id: { Args: never; Returns: string }
+      original_workflow: { Args: { p_type: string }; Returns: Json }
       portal_accept_terms: { Args: { p_version: string }; Returns: undefined }
       portal_approve_cad: {
         Args: { p_document_id: string; p_order_id: string }
@@ -1340,6 +1431,7 @@ export type Database = {
         Returns: undefined
       }
       promote_to_admin: { Args: { p_email: string }; Returns: string }
+      public_shared_customer: { Args: { p_token: string }; Returns: Json }
       public_track_order: { Args: { p_token: string }; Returns: Json }
       recompute_order_payments: {
         Args: { p_order_id: string }
@@ -1392,9 +1484,15 @@ export type Database = {
         }
         Returns: string
       }
+      staff_revoke_order_share: {
+        Args: { p_order_id: string }
+        Returns: undefined
+      }
       staff_share_order: { Args: { p_order_id: string }; Returns: string }
+      staff_unassigned_customer: { Args: never; Returns: string }
       team_sees_all: { Args: never; Returns: boolean }
       try_uuid: { Args: { p: string }; Returns: string }
+      validate_workflow: { Args: { p_definition: Json }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

@@ -16,6 +16,7 @@ import { Route as PortalRouteImport } from './routes/portal'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as PortalShareTokenRouteImport } from './routes/portal-share.$token'
 import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PortalExecutiveRouteImport } from './routes/portal.executive'
 import { Route as PortalProfileRouteImport } from './routes/portal.profile'
@@ -61,6 +62,11 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AdminRoute,
+} as any)
+const PortalShareTokenRoute = PortalShareTokenRouteImport.update({
+  id: '/portal-share/$token',
+  path: '/portal-share/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PortalIndexRoute = PortalIndexRouteImport.update({
   id: '/',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/portal': typeof PortalRouteWithChildren
   '/set-password': typeof SetPasswordRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/portal-share/$token': typeof PortalShareTokenRoute
   '/portal/executive': typeof PortalExecutiveRoute
   '/portal/profile': typeof PortalProfileRoute
   '/portal/terms': typeof PortalTermsRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/set-password': typeof SetPasswordRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/portal-share/$token': typeof PortalShareTokenRoute
   '/portal/executive': typeof PortalExecutiveRoute
   '/portal/profile': typeof PortalProfileRoute
   '/portal/terms': typeof PortalTermsRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/portal': typeof PortalRouteWithChildren
   '/set-password': typeof SetPasswordRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/portal-share/$token': typeof PortalShareTokenRoute
   '/portal/executive': typeof PortalExecutiveRoute
   '/portal/profile': typeof PortalProfileRoute
   '/portal/terms': typeof PortalTermsRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/portal'
     | '/set-password'
     | '/admin/settings'
+    | '/portal-share/$token'
     | '/portal/executive'
     | '/portal/profile'
     | '/portal/terms'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/set-password'
     | '/admin/settings'
+    | '/portal-share/$token'
     | '/portal/executive'
     | '/portal/profile'
     | '/portal/terms'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/portal'
     | '/set-password'
     | '/admin/settings'
+    | '/portal-share/$token'
     | '/portal/executive'
     | '/portal/profile'
     | '/portal/terms'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PortalRoute: typeof PortalRouteWithChildren
   SetPasswordRoute: typeof SetPasswordRoute
+  PortalShareTokenRoute: typeof PortalShareTokenRoute
   TrackTokenRoute: typeof TrackTokenRoute
 }
 
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/settings'
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/portal-share/$token': {
+      id: '/portal-share/$token'
+      path: '/portal-share/$token'
+      fullPath: '/portal-share/$token'
+      preLoaderRoute: typeof PortalShareTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/portal/': {
       id: '/portal/'
@@ -405,6 +425,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PortalRoute: PortalRouteWithChildren,
   SetPasswordRoute: SetPasswordRoute,
+  PortalShareTokenRoute: PortalShareTokenRoute,
   TrackTokenRoute: TrackTokenRoute,
 }
 export const routeTree = rootRouteImport

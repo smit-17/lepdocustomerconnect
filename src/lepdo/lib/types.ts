@@ -86,6 +86,7 @@ export interface OrderListRow extends Order {
 }
 
 export interface Stage {
+  ui_schema?: import('./workflow-editor').StageSchema | null;
   id: string;
   order_id: string;
   stage_key: string;
@@ -230,7 +231,7 @@ export interface PortalOrder {
     payments: { id: string; amount: number; currency: string; payment_date: string; payment_type: string; status: PaymentStatus; reference: string | null }[];
   };
   executive: Executive | null;
-  stages: { id: string; stage_key: string; name: string; position: number; status: StageStatus; completed_at: string | null; customer_note: string | null; details: Record<string, string> }[];
+  stages: { id: string; stage_key: string; name: string; position: number; status: StageStatus; completed_at: string | null; customer_note: string | null; details: Record<string, string>; ui_schema?: import('./workflow-editor').StageSchema | null }[];
   updates: { id: string; stage_name: string | null; status: string | null; note: string | null; created_at: string }[];
   documents: { id: string; name: string; doc_type: string; storage_path: string; mime_type: string | null; size_bytes: number | null; created_at: string }[];
   shipments: { id: string; courier: string; tracking_number: string | null; tracking_url: string | null; shipped_date: string | null; estimated_delivery_date: string | null; status: ShipmentStatus; delivered_at: string | null }[];

@@ -111,7 +111,6 @@ function ShipmentDrawer({ open, onClose, order, shipment }: { open: boolean; onC
   async function save(e: FormEvent) {
     e.preventDefault();
     if (busy) return;
-    if (!courier.trim()) return setError('Enter the courier company.');
     if (url && !/^https?:\/\//i.test(url.trim())) return setError('Tracking URL must start with https://');
     setBusy(true);
     setError(null);
@@ -143,7 +142,7 @@ function ShipmentDrawer({ open, onClose, order, shipment }: { open: boolean; onC
       </>}
     >
       <form id="shipment-form" onSubmit={save} className="space-y-4">
-        <Field label="Courier company" required>
+        <Field label="Courier company">
           <Input list="courier-list" value={courier} onChange={(e) => setCourier(e.target.value)} placeholder="e.g. FedEx" maxLength={80} autoFocus />
           <datalist id="courier-list">{COURIERS.map((c) => <option key={c} value={c} />)}</datalist>
         </Field>

@@ -44,7 +44,6 @@ export const inviteUser = createServerFn({ method: 'POST' })
     } else {
       if (caller.role !== 'admin') throw new Error('Only administrators can invite team members.');
       role = body.role === 'admin' ? 'admin' : 'team';
-      if (!fullName) throw new Error('Full name is required.');
     }
     if (!EMAIL_RE.test(email)) throw new Error('A valid email address is required.');
 

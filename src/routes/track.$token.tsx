@@ -3,10 +3,10 @@ import SharedOrderPage from '@/lepdo/pages/portal/SharedOrderPage';
 
 export const Route = createFileRoute('/track/$token')({
   head: () => ({ meta: [
-    { title: 'Shared order status — LEPDO CONNECT' },
-    { name: 'description', content: 'Track your LEPDO order status and progress.' },
-    { property: 'og:title', content: 'Shared order status — LEPDO CONNECT' },
-    { property: 'og:description', content: 'Track your LEPDO order status and progress.' },
+    { title: 'Shared customer profile — LEPDO CONNECT' },
+    { name: 'description', content: 'View your shared LEPDO customer profile, orders and live progress.' },
+    { property: 'og:title', content: 'Shared customer profile — LEPDO CONNECT' },
+    { property: 'og:description', content: 'View your shared LEPDO customer profile, orders and live progress.' },
     { property: 'og:type', content: 'website' },
     { name: 'twitter:card', content: 'summary' },
     { name: 'robots', content: 'noindex, nofollow' },

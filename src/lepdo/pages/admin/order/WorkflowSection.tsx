@@ -140,7 +140,7 @@ function InvoiceUploadForm({ order, stage, cfg }: { order: OrderListRow; stage: 
     try { num = parseInvoiceAmount(amount); } catch (e) { return toast.error(errorMessage(e)); }
     const amountChanged = num !== current;
     const completing = complete && !alreadyDone;
-    if (!file && !amountChanged && !completing) return toast.error('Choose a file or change the amount.');
+    if (!file && !amountChanged && !completing) { toast.success('Invoice details saved'); return; }
     setBusy(true);
     try {
       if (amountChanged) {

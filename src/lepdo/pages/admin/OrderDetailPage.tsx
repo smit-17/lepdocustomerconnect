@@ -1,3 +1,4 @@
+import { useCustomers } from '../../lib/api';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams, useNavigate } from '@/lepdo/router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -124,9 +125,10 @@ export default function OrderDetailPage() {
 
 function EditOrderDrawer({ open, onClose, order, hasPayments }: { open: boolean; onClose: () => void; order: OrderListRow; hasPayments: boolean }) {
   const staff = useStaff();
+  const customers = useCustomers('');
   const qc = useQueryClient();
   const toast = useToast();
-  const [f, setF] = useState({ title: '', po: '', currency: 'USD', proforma: '', final: '', eta: '', exec: '', notes: '', terms: '', action: '', department: '' });
+  const [f, setF] = useState({ title: '', po: '', currency: 'USD', proforma: '', final: '', eta: '', exec: '', notes: '', terms: '', action: '', department: '', customer: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -137,7 +139,7 @@ function EditOrderDrawer({ open, onClose, order, hasPayments }: { open: boolean;
       title: order.title, po: order.customer_po_ref || '', currency: order.currency,
       proforma: order.proforma_amount?.toString() ?? '', final: order.final_invoice_amount?.toString() ?? '',
       eta: order.expected_delivery_date || '', exec: order.executive_override_id || '', notes: order.notes || '',
-      terms: order.payment_terms || '', action: order.customer_action_required || '', department: order.current_responsible_dept || '',
+      customer: order.customer_id, terms: order.payment_terms || '', action: order.customer_action_required || '', department: order.current_responsible_dept || '',
     });
   }, [open, order]);
 
@@ -149,10 +151,9 @@ function EditOrderDrawer({ open, onClose, order, hasPayments }: { open: boolean;
     const proforma = num(f.proforma);
     const final = num(f.final);
     if ((proforma !== null && (Number.isNaN(proforma) || proforma < 0)) || (final !== null && (Number.isNaN(final) || final < 0))) return setError('Amounts must be positive numbers.');
-    if (!f.title.trim()) return setError('Title is required.');
     setBusy(true);
     const { error } = await supabase.from('orders').update({
-      title: f.title.trim(), customer_po_ref: f.po.trim() || null, currency: f.currency, proforma_amount: proforma,
+      customer_id: f.customer || order.customer_id, title: f.title.trim(), customer_po_ref: f.po.trim() || null, currency: f.currency, proforma_amount: proforma,
       final_invoice_amount: final, expected_delivery_date: f.eta || null, executive_override_id: f.exec || null, notes: f.notes.trim() || null,
       payment_terms: f.terms.trim() || null, customer_action_required: f.action.trim() || null, current_responsible_dept: f.department || null,
     }).eq('id', order.id);
@@ -169,7 +170,8 @@ function EditOrderDrawer({ open, onClose, order, hasPayments }: { open: boolean;
     <Drawer open={open} onClose={onClose} title="Edit order" subtitle={order.reference}
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" type="submit" form="edit-order-form" loading={busy}>Save changes</Button></>}>
       <form id="edit-order-form" onSubmit={save} className="space-y-4">
-        <Field label="Order title or reference" required><Input value={f.title} onChange={set('title')} maxLength={200} /></Field>
+        <Field label="Customer"><Select value={f.customer} onChange={set('customer')}>{(customers.data ?? []).map(c => <option key={c.id} value={c.id}>{c.name || 'Unnamed customer'}</option>)}</Select></Field>
+        <Field label="Order title or reference"><Input value={f.title} onChange={set('title')} maxLength={200} /></Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_100px]">
           <Field label="Proforma amount"><Input inputMode="decimal" value={f.proforma} onChange={set('proforma')} placeholder="0.00" /></Field>
           <Field label="Final invoice amount" hint="Balance uses this when set."><Input inputMode="decimal" value={f.final} onChange={set('final')} placeholder="0.00" /></Field>

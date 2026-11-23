@@ -60,7 +60,7 @@ export const Button = forwardRef<HTMLButtonElement, BtnProps>(function Button(
 });
 
 /* ----------------------------------------------------------------- Forms */
-export function Field({ label, required, hint, error, children, className, group }: { label: string; required?: boolean; hint?: string; error?: string | null; children: ReactNode; className?: string; group?: boolean }) {
+export function Field({ label, hint, error, children, className, group }: { label: string; required?: boolean; hint?: string; error?: string | null; children: ReactNode; className?: string; group?: boolean }) {
   // `group` renders a fieldset-like <div role="group"> for button groups / checkbox lists,
   // so the label does not hijack the accessible name of the first control.
   const Tag = (group ? 'div' : 'label') as 'label';
@@ -68,7 +68,7 @@ export function Field({ label, required, hint, error, children, className, group
   return (
     <Tag className={cx('block', className)} {...(group ? { role: 'group', 'aria-labelledby': labelId } : {})}>
       <span id={labelId} className="mb-1.5 block text-[13px] font-medium text-slate-700">
-        {label} {required && <span className="text-brand-orange">*</span>}
+        {label}
       </span>
       {children}
       {error ? <span className="mt-1 block text-xs text-red-600">{error}</span> : hint ? <span className="mt-1 block text-xs text-slate-500">{hint}</span> : null}

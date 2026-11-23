@@ -44,15 +44,19 @@ export default function NewOrderDrawer({ open, onClose, customerId }: { open: bo
     e.preventDefault();
     if (busy) return;
     setError(null);
-    if (!cid) return setError('Select a customer.');
-    if (!title.trim()) return setError('Add an order title or reference.');
     const amt = amount.trim() ? Number(amount.replace(/,/g, '')) : null;
     if (amt !== null && (Number.isNaN(amt) || amt < 0)) return setError('Order amount must be a positive number.');
     setBusy(true);
+    let customerIdForOrder = cid;
+    if (!customerIdForOrder) {
+      const result = await supabase.rpc('staff_unassigned_customer');
+      if (result.error) { setBusy(false); return setError(errorMessage(result.error)); }
+      customerIdForOrder = result.data;
+    }
     const { data, error } = await supabase
       .from('orders')
       .insert({
-        customer_id: cid,
+        customer_id: customerIdForOrder,
         order_type: type,
         title: title.trim(),
         currency,
@@ -99,7 +103,7 @@ export default function NewOrderDrawer({ open, onClose, customerId }: { open: bo
       </>}
     >
       <form id="order-form" onSubmit={save} className="space-y-4">
-        <Field label="Customer" required>
+        <Field label="Customer">
           <Select value={cid} onChange={(e) => { setCid(e.target.value); setExecOverride(''); }} autoFocus={!customerId}>
             <option value="">Select customer…</option>
             {(customers.data || []).slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
@@ -108,7 +112,7 @@ export default function NewOrderDrawer({ open, onClose, customerId }: { open: bo
           </Select>
         </Field>
 
-        <Field label="Order type" required group>
+        <Field label="Order type" group>
           <div className="grid grid-cols-2 gap-2">
             {([['diamond', 'Diamond', Gem], ['jewellery', 'Jewellery', Sparkles]] as const).map(([v, label, Icon]) => (
               <button
@@ -124,7 +128,7 @@ export default function NewOrderDrawer({ open, onClose, customerId }: { open: bo
           </div>
         </Field>
 
-        <Field label="Order title or reference" required>
+        <Field label="Order title or reference">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={type === 'diamond' ? 'e.g. 2.01ct Oval E VS1 IGI' : 'e.g. Halo engagement ring 18K'} maxLength={200} autoFocus={!!customerId} />
         </Field>
 

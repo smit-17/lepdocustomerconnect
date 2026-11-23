@@ -42,16 +42,12 @@ export default function CustomerDrawer({ open, onClose, onCreateOrder, customer 
     e.preventDefault();
     if (busy) return;
     setError(null);
-    if (!form.name.trim() || !form.email.trim() || !form.country.trim() || !form.assigned_executive_id) {
-      setError('Please fill in the required fields.');
-      return;
-    }
     setBusy(true);
     const payload = {
       name: form.name.trim(),
       email: form.email.trim().toLowerCase(),
       country: form.country.trim(),
-      assigned_executive_id: form.assigned_executive_id,
+      assigned_executive_id: form.assigned_executive_id || profile?.id,
       contact_person: form.contact_person.trim() || null,
       phone: form.phone.trim() || null,
       address: form.address.trim() || null,
@@ -101,7 +97,7 @@ export default function CustomerDrawer({ open, onClose, onCreateOrder, customer 
           <Button variant="primary" size="lg" className="w-full" icon={<Package className="h-4 w-4" />} onClick={() => onCreateOrder?.(created.id)}>
             Create Order
           </Button>
-          <Button size="lg" className="w-full" icon={<Send className="h-4 w-4" />} loading={inviting} disabled={invited} onClick={invite}>
+          <Button size="lg" className="w-full" icon={<Send className="h-4 w-4" />} loading={inviting} disabled={invited || !created.email} onClick={invite}>
             {invited ? 'Invitation sent' : 'Send Customer Invitation'}
           </Button>
           <button className="w-full py-2 text-sm text-slate-500 hover:text-brand-indigo" onClick={() => { onClose(); navigate(`/admin/customers/${created.id}`); }}>
@@ -117,25 +113,25 @@ export default function CustomerDrawer({ open, onClose, onCreateOrder, customer 
       open={open}
       onClose={onClose}
       title={customer ? 'Edit customer' : 'Add customer'}
-      subtitle={customer ? undefined : 'Only four fields are required.'}
+      
       footer={<>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button variant="primary" type="submit" form="customer-form" loading={busy}>{customer ? 'Save changes' : 'Create customer'}</Button>
       </>}
     >
       <form id="customer-form" onSubmit={save} className="space-y-4">
-        <Field label="Customer or company name" required>
+        <Field label="Customer or company name">
           <Input autoFocus value={form.name} onChange={set('name')} placeholder="e.g. Aurora Fine Jewels Ltd" maxLength={200} />
         </Field>
-        <Field label="Email address" required hint="Used for the customer portal invitation.">
+        <Field label="Email address" hint="Used for the customer portal invitation.">
           <Input type="email" value={form.email} onChange={set('email')} placeholder="buyer@company.com" maxLength={200} />
         </Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Country" required>
+          <Field label="Country">
             <Input list="country-list" value={form.country} onChange={set('country')} placeholder="Start typing…" maxLength={80} />
             <datalist id="country-list">{COUNTRIES.map((c) => <option key={c} value={c} />)}</datalist>
           </Field>
-          <Field label="Assigned executive" required>
+          <Field label="Assigned executive">
             <Select value={form.assigned_executive_id} onChange={set('assigned_executive_id')}>
               <option value="">Select…</option>
               {(staff.data || []).filter((s) => s.is_active || s.id === form.assigned_executive_id).map((s) => (

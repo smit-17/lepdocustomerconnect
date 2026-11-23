@@ -23,10 +23,10 @@ export function ApprovalBlock({ orderId, approvals, canAct, onView }: { orderId:
   const pending = current.status === 'pending' && current.customer_approval_required;
 
   async function decide(decision: 'approved' | 'changes_requested') {
-    if (decision === 'changes_requested' && (!reason || !notes.trim())) return toast.error('Choose a reason and add notes.');
+    if (!current) return;
     setBusy(true);
     try {
-      const { error } = await supabase.rpc('portal_decide_approval', { p_approval_id: current!.id, p_decision: decision, p_reason: reason || null, p_notes: notes || null });
+      const { error } = await supabase.rpc('portal_decide_approval', { p_approval_id: current.id, p_decision: decision, p_reason: reason || null, p_notes: notes || null });
       if (error) throw error;
       setMode('none'); setReason(''); setNotes('');
       await qc.invalidateQueries({ queryKey: keys.portalOrder(orderId) });
@@ -60,8 +60,8 @@ export function ApprovalBlock({ orderId, approvals, canAct, onView }: { orderId:
       )}
       {mode === 'reject' && (
         <div className="mt-3 space-y-3 rounded-lg bg-white p-3">
-          <Field label="Reason" required><Select value={reason} onChange={e => setReason(e.target.value)}><option value="">Choose a reason</option>{REJECTION_REASONS.map(r => <option key={r}>{r}</option>)}</Select></Field>
-          <Field label="Notes" required><Textarea rows={3} maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Describe the changes you need" /></Field>
+          <Field label="Reason"><Select value={reason} onChange={e => setReason(e.target.value)}><option value="">Choose a reason</option>{REJECTION_REASONS.map(r => <option key={r}>{r}</option>)}</Select></Field>
+          <Field label="Notes"><Textarea rows={3} maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Describe the changes you need" /></Field>
           <div className="flex flex-col gap-2 sm:flex-row"><Button className="min-h-11" variant="indigo" loading={busy} onClick={() => decide('changes_requested')}>Send change request</Button><Button className="min-h-11" variant="ghost" onClick={() => setMode('none')}>Cancel</Button></div>
         </div>
       )}

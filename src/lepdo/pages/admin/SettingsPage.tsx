@@ -10,6 +10,9 @@ import { AVATAR_BUCKET, supabase } from '../../lib/supabase';
 import { errorMessage, fmtDate, timeAgo } from '../../lib/format';
 import { CURRENCIES } from '../../lib/workflows';
 import type { Role } from '../../lib/types';
+import { WorkflowEditor } from '../../components/WorkflowEditor';
+import { workflowDefinition, type WorkflowDefinition } from '../../lib/workflow-editor';
+import type { OrderType } from '../../lib/types';
 import ResetHistoryButton from '../../components/ResetHistoryButton';
 
 type Tab = 'company' | 'team' | 'invitations' | 'account' | 'configuration';
@@ -64,6 +67,23 @@ function Configuration() {
     <fieldset disabled={busy || !settings.data}>
       <Toggle checked={settings.data?.edit_running_order_steps ?? false} onChange={change} label="Edit steps while order running" />
     </fieldset>
+    <UniversalWorkflows />
+  </section>;
+}
+
+function UniversalWorkflows() {
+  const [type, setType] = useState<OrderType>('diamond');
+  const qc = useQueryClient();
+  const workflow = useQuery({ queryKey: ['workflow-template', type], queryFn: async () => workflowDefinition.parse(await run<WorkflowDefinition>(supabase.rpc('admin_get_workflow', { p_type: type }))) });
+  async function persist(definition: WorkflowDefinition | null, reset = false) {
+    const { error } = await supabase.rpc('admin_save_workflow', { p_type: type, p_definition: definition, p_reset: reset });
+    if (error) throw error;
+    await qc.invalidateQueries();
+  }
+  return <section className="mt-8 border-t border-border pt-6">
+    <h2 className="mb-4 text-lg font-semibold text-brand-indigo">Universal Edit Steps</h2>
+    <div className="mb-5"><Tabs value={type} onChange={setType} items={[{ value: 'diamond', label: 'Diamond' }, { value: 'jewellery', label: 'Jewelry' }]} /></div>
+    {workflow.isLoading ? <PageLoader /> : workflow.error ? <p className="text-destructive">{errorMessage(workflow.error)}</p> : workflow.data && <WorkflowEditor key={`${type}-${workflow.dataUpdatedAt}`} initial={workflow.data} onSave={d => persist(d)} onReset={() => persist(null, true)} />}
   </section>;
 }
 
@@ -85,7 +105,7 @@ function CompanyProfile() {
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.from('app_settings').update({
-      company_name: f.company_name.trim() || 'LEPDO', tagline: f.tagline.trim() || null, email: f.email.trim() || null, phone: f.phone.trim() || null,
+      company_name: f.company_name.trim(), tagline: f.tagline.trim() || null, email: f.email.trim() || null, phone: f.phone.trim() || null,
       whatsapp: f.whatsapp.trim() || null, website: f.website.trim() || null, address: f.address.trim() || null, default_currency: f.default_currency, team_sees_all: f.team_sees_all,
     }).eq('id', 1);
     setBusy(false);
@@ -100,7 +120,7 @@ function CompanyProfile() {
       <form onSubmit={save} className="space-y-4">
         <fieldset disabled={!isAdmin} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Company name" required><Input value={f.company_name} onChange={set('company_name')} maxLength={120} /></Field>
+            <Field label="Company name"><Input value={f.company_name} onChange={set('company_name')} maxLength={120} /></Field>
             <Field label="Tagline"><Input value={f.tagline} onChange={set('tagline')} maxLength={200} /></Field>
             <Field label="Email"><Input type="email" value={f.email} onChange={set('email')} /></Field>
             <Field label="Phone"><Input value={f.phone} onChange={set('phone')} /></Field>
@@ -144,7 +164,7 @@ function TeamMembers() {
 
   async function invite(e: FormEvent) {
     e.preventDefault();
-    if (!inv.full_name.trim() || !inv.email.trim()) return toast.error('Enter a name and email.');
+    if (!inv.email.trim()) return toast.error('An email address is needed to send an invitation.');
     setBusy('invite');
     try {
       const r = await sendInvite({ kind: 'team', email: inv.email.trim().toLowerCase(), full_name: inv.full_name.trim(), ...(inv.phone.trim() ? { phone: inv.phone.trim() } : {}), role: inv.role });
@@ -242,7 +262,6 @@ function ContactDrawer({ row, onClose }: { row: DirRow | null; onClose: () => vo
     e.preventDefault();
     if (!row) return;
     const email = f.email.trim().toLowerCase();
-    if (!f.full_name.trim()) return toast.error('Full name is required.');
     setBusy(true);
     if (email && email !== row.email.toLowerCase()) {
       try { await updateTeamEmail(row.id, email); } catch (err) { setBusy(false); return toast.error(errorMessage(err)); }

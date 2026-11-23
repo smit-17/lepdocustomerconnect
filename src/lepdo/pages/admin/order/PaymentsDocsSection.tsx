@@ -1,3 +1,4 @@
+import { optionalPaymentAmount } from '../../../lib/workflow-editor';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, Download, Eye, EyeOff, FileText, Pencil, Plus, Trash, Upload } from 'lucide-react';
@@ -189,8 +190,8 @@ function PaymentDrawer({ open, onClose, order, payment, payments }: { open: bool
   async function save(e: FormEvent) {
     e.preventDefault();
     if (busy) return;
-    const amt = Number(amount.replace(/,/g, ''));
-    if (!amt || amt <= 0) return setError('Enter an amount greater than zero.');
+    let amt: number;
+    try { amt = optionalPaymentAmount(amount); } catch (e) { return setError(errorMessage(e)); }
     setBusy(true);
     setError(null);
     try {
@@ -199,13 +200,13 @@ function PaymentDrawer({ open, onClose, order, payment, payments }: { open: bool
         const doc = await uploadDocument(order.id, file, { doc_type: 'payment_confirmation', customer_visible: false, name: file.name });
         documentId = doc.id;
       }
-      const values = { amount: amt, currency: order.currency, payment_date: date, method, payment_type: ptype, status, reference: reference.trim() || null, notes: notes.trim() || null, document_id: documentId };
+      const values = { amount: amt, currency: order.currency, payment_date: date || today(), method, payment_type: ptype, status: amt === 0 ? 'initiated' : status, reference: reference.trim() || null, notes: notes.trim() || null, document_id: documentId };
       const res = payment
         ? await supabase.from('payments').update(values).eq('id', payment.id)
         : await supabase.from('payments').insert({ ...values, order_id: order.id });
       if (res.error) throw res.error;
       invalidate();
-      toast.success(status === 'confirmed' ? 'Payment recorded and balance updated' : 'Payment recorded');
+      toast.success(amt > 0 && status === 'confirmed' ? 'Payment recorded and balance updated' : 'Payment recorded');
       onClose();
     } catch (err) {
       setError(errorMessage(err));
@@ -239,10 +240,10 @@ function PaymentDrawer({ open, onClose, order, payment, payments }: { open: bool
     >
       <form id="payment-form" onSubmit={save} className="space-y-4">
         <div className="grid grid-cols-[1fr_100px] gap-3">
-          <Field label="Amount" required><Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus placeholder="0.00" /></Field>
+          <Field label="Amount"><Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus placeholder="0.00" /></Field>
           <Field label="Currency" hint="Order currency"><Input value={order.currency} disabled /></Field>
         </div>
-        <Field label="Payment status" required group>
+        <Field label="Payment status" group>
           <div className="grid grid-cols-3 gap-2">
             {(['initiated', 'confirmed', 'failed'] as PaymentStatus[]).map((s) => (
               <button key={s} type="button" disabled={!isAdmin && s === 'confirmed'} onClick={() => setStatus(s)}
@@ -254,10 +255,10 @@ function PaymentDrawer({ open, onClose, order, payment, payments }: { open: bool
           <p className="mt-1.5 text-xs text-slate-500">Only <strong>Received / Confirmed</strong> payments reduce the balance. Use <em>Initiated</em> when the customer says they have sent it.</p>
         </Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Payment date" required><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></Field>
+          <Field label="Payment date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
           <Field label="Payment type"><Select value={ptype} onChange={(e) => setPtype(e.target.value)}>{Object.entries(PAYMENT_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
         </div>
-        <Field label="Payment method" required><Select value={method} onChange={(e) => setMethod(e.target.value)}>{Object.entries(PAYMENT_METHODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
+        <Field label="Payment method"><Select value={method} onChange={(e) => setMethod(e.target.value)}>{Object.entries(PAYMENT_METHODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
         <Field label="Reference number"><Input value={reference} onChange={(e) => setReference(e.target.value)} maxLength={120} placeholder="SWIFT / UTR / transaction ID" /></Field>
         <Field label="Notes" hint="Internal only."><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>
         <Field label="Supporting document" hint={payment?.document_id ? 'A document is already attached; choosing a file adds a new one.' : 'Saved as an internal document.'}>
@@ -292,7 +293,7 @@ function UploadDrawer({ open, onClose, order }: { open: boolean; onClose: () => 
   async function save(e: FormEvent) {
     e.preventDefault();
     if (busy) return;
-    if (!files.length) return setError('Choose at least one file.');
+    if (!files.length) { onClose(); return; }
     setBusy(true);
     setError(null);
     let ok = 0;
@@ -328,13 +329,13 @@ function UploadDrawer({ open, onClose, order }: { open: boolean; onClose: () => 
           <span className="mt-0.5 text-xs text-slate-500">{files.length ? files.map((f) => f.name).join(', ') : 'PDF, images, Office files · up to 25 MB each'}</span>
           <input type="file" multiple className="sr-only" onChange={(e) => setFiles(Array.from(e.target.files || []))} />
         </label>
-        <Field label="Document type" required>
+        <Field label="Document type">
           <Select value={docType} onChange={(e) => { setDocType(e.target.value); setVisible(DOC_TYPES[e.target.value].visible); }}>
             {Object.entries(DOC_TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </Select>
         </Field>
         {files.length === 1 && (
-          <Field label="Document name" hint="Defaults to the file name."><Input value={name} onChange={(e) => setName(e.target.value)} placeholder={files[0]!.name} maxLength={200} /></Field>
+          <Field label="Document name" hint="Defaults to the file name."><Input value={name} onChange={(e) => setName(e.target.value)} placeholder={files[0]?.name} maxLength={200} /></Field>
         )}
         <Toggle checked={visible} onChange={setVisible} label="Visible to customer" hint={visible ? 'The customer can view and download it in the portal.' : 'Private — LEPDO team only.'} />
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

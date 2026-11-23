@@ -1,49 +1,45 @@
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useParams } from '../../router';
-import { Logo, PageLoader, ProgressBar, EmptyState } from '../../components/ui';
-import { OrderStatusBadge } from '../../components/OrderBits';
-import { StatusIcon } from '../../components/StatusIcon';
-import { STAGE_STATUS } from '../../lib/workflows';
+import { PageLoader, EmptyState } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { run } from '../../lib/api';
-import { TRACKING_REFRESH_MS, trackingOrder, trackingToken } from '../../lib/tracking';
+import { TRACKING_REFRESH_MS, trackingToken } from '../../lib/tracking';
+import { sharedCustomer, sharedHome, sharedOrderView } from '../../lib/shared-profile';
+import { PortalLayoutView } from '../../layouts/PortalLayout';
+import { PortalHomeView } from './PortalHomePage';
+import { CustomerProfileDetails } from './PortalProfilePage';
+import { OrderView } from './PortalOrderPage';
 
 export default function SharedOrderPage() {
   const { token = '' } = useParams();
   const valid = trackingToken.safeParse(token).success;
+  const [tab, setTab] = useState('My Profile');
+  const [orderId, setOrderId] = useState<string | null>(null);
   const query = useQuery({
     queryKey: ['shared-order', token],
     enabled: valid,
     queryFn: async () => {
-      const result = await run<unknown>(supabase.rpc('public_track_order', { p_token: token }));
-      return result === null ? null : trackingOrder.parse(result);
+      const result = await run<unknown>(supabase.rpc('public_shared_customer', { p_token: token }));
+      return result === null ? null : sharedCustomer.parse(result);
     },
     refetchInterval: TRACKING_REFRESH_MS,
     refetchOnWindowFocus: true,
     retry: false,
   });
-  const order = query.data;
-  return <div className="min-h-screen bg-background text-foreground">
-    <header className="border-b border-border bg-card px-5 py-5"><div className="mx-auto max-w-2xl"><Logo variant="brand" className="h-7" /></div></header>
-    <main className="mx-auto max-w-2xl px-5 py-8 sm:py-12">
-      {valid && query.isPending ? <PageLoader /> : !order ?
-        <EmptyState title="Tracking link unavailable" text="This link is invalid or the order is no longer available." /> : <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0"><p className="text-sm text-muted-foreground">Order ID</p><h1 className="mt-1 break-all text-2xl font-semibold">{order.reference}</h1></div>
-            <OrderStatusBadge status={order.status} />
-          </div>
-          <p className="mt-6 text-sm text-muted-foreground">Current stage</p>
-          <h2 className="mt-1 break-words text-lg font-semibold">{order.current_stage_name || 'Not started'}</h2>
-          <div className="mb-2 mt-5 text-right text-sm text-muted-foreground">{Math.round(order.progress_pct)}%</div>
-          <ProgressBar value={order.progress_pct} />
-          <h2 className="mb-5 mt-10 text-lg font-semibold">Order progress</h2>
-          <ol>{order.stages.map((stage, index) => <li key={stage.stage_key} className="relative flex gap-4 pb-7">
-            {index < order.stages.length - 1 && <span aria-hidden className="absolute bottom-0 left-[13px] top-7 w-px bg-border" />}
-            <StatusIcon status={stage.status} />
-            <div className="min-w-0"><p className="break-words font-medium">{stage.name}</p><p className="mt-1 text-sm text-muted-foreground">{STAGE_STATUS[stage.status].customerLabel}</p></div>
-          </li>)}</ol>
-          {query.isError && <p role="status" className="mt-4 text-sm text-muted-foreground">Updates are temporarily unavailable. Reconnecting…</p>}
+  const data = valid && !query.isError ? query.data : null;
+  const home = data ? sharedHome(data) : undefined;
+  const order = data?.orders.find(o => o.id === orderId);
+  const path = `/portal-share/${token}`;
+  return <PortalLayoutView data={home} shared={{ path, tab, onTab: next => { setTab(next); setOrderId(null); } }}>
+    {valid && query.isPending ? <PageLoader /> : !data || !home ?
+      <EmptyState title="Tracking link unavailable" text="This link is invalid, revoked or temporarily unavailable." /> : order ?
+      <OrderView key={order.id} d={sharedOrderView(order)} readOnly sharePath={path} onBack={() => { setOrderId(null); setTab('My Orders'); }} /> : <>
+        {tab === 'My Profile' && <>
+          <h1 className="text-2xl font-semibold tracking-tight text-brand-indigo">My Profile</h1>
+          <div className="mb-8 mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2"><CustomerProfileDetails data={home} readOnly /></div>
         </>}
-    </main>
-  </div>;
+        <PortalHomeView data={home} readOnly sharePath={path} onOrder={setOrderId} />
+      </>}
+  </PortalLayoutView>;
 }

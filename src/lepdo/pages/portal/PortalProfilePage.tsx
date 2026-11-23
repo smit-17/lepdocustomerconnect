@@ -51,31 +51,11 @@ export default function PortalProfilePage() {
     toast.success('Password updated');
   }
 
-  const c = data.customer;
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight text-brand-indigo">My Profile</h1>
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-cream-200 bg-white p-5 sm:p-6">
-          <h2 className="mb-4 text-[15px] font-semibold text-brand-indigo">Your details</h2>
-          <dl className="space-y-4 text-sm">
-            <div><dt className="text-xs text-muted-foreground">Your name</dt><dd>{data.me?.full_name || '—'}</dd></div>
-            <div><dt className="text-xs text-muted-foreground">Email</dt><dd className="break-all">{data.me?.email}</dd></div>
-            <div><dt className="text-xs text-muted-foreground">Phone / WhatsApp</dt><dd>{data.me?.phone || '—'}</dd></div>
-          </dl>
-        </section>
-
-        <section className="rounded-2xl border border-cream-200 bg-white p-5 sm:p-6">
-          <h2 className="mb-4 text-[15px] font-semibold text-brand-indigo">Company</h2>
-          <dl className="space-y-3 text-sm">
-            <div><dt className="text-xs text-slate-500">Company</dt><dd className="font-medium text-slate-900">{c.name}</dd></div>
-            {c.contact_person && <div><dt className="text-xs text-slate-500">Contact person</dt><dd>{c.contact_person}</dd></div>}
-            <div><dt className="text-xs text-slate-500">Country</dt><dd>{c.country}</dd></div>
-            <div><dt className="text-xs text-slate-500">Company email</dt><dd>{c.email}</dd></div>
-            {c.address && <div><dt className="text-xs text-slate-500">Address</dt><dd className="whitespace-pre-line">{c.address}</dd></div>}
-          </dl>
-          <p className="mt-4 text-xs text-slate-500">To update company details, please contact your LEPDO executive.</p>
-        </section>
+        <CustomerProfileDetails data={data} />
 
         <section className="border-t border-cream-200 pt-6">
           <h2 className="text-[15px] font-semibold text-brand-indigo">KYC</h2>
@@ -85,7 +65,7 @@ export default function PortalProfilePage() {
           <ErrorNote error={kyc.error} />
           {record?.document_url && <Button className="mt-3" onClick={() => { if (record.document_url) previewKyc(record.document_url).catch(err => toast.error(errorMessage(err))); }}>View submitted document</Button>}
           {!kyc.isLoading && !['Approved', 'Under Review'].includes(record?.status || '') && <form onSubmit={submitKyc} className="mt-4 space-y-3">
-            <Field label="KYC document"><Input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} required /></Field>
+            <Field label="KYC document"><Input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} /></Field>
             <Button type="submit" variant="indigo" loading={busy === 'kyc'} disabled={!file}>Submit KYC</Button>
           </form>}
         </section>
@@ -108,4 +88,34 @@ export default function PortalProfilePage() {
       </div>
     </>
   );
+}
+
+export function CustomerProfileDetails({ data, readOnly = false }: { data: import('../../lib/types').PortalHome; readOnly?: boolean }) {
+  const c = data.customer;
+  return <>
+{!readOnly && <>
+        <section className="rounded-2xl border border-cream-200 bg-white p-5 sm:p-6">
+          <h2 className="mb-4 text-[15px] font-semibold text-brand-indigo">Your details</h2>
+          <dl className="space-y-4 text-sm">
+            <div><dt className="text-xs text-muted-foreground">Your name</dt><dd>{data.me?.full_name || '—'}</dd></div>
+            <div><dt className="text-xs text-muted-foreground">Email</dt><dd className="break-all">{data.me?.email}</dd></div>
+            <div><dt className="text-xs text-muted-foreground">Phone / WhatsApp</dt><dd>{data.me?.phone || '—'}</dd></div>
+          </dl>
+        </section>
+
+</>}
+        <section className="rounded-2xl border border-cream-200 bg-white p-5 sm:p-6">
+          <h2 className="mb-4 text-[15px] font-semibold text-brand-indigo">Company</h2>
+          <dl className="space-y-3 text-sm">
+            <div><dt className="text-xs text-slate-500">Company</dt><dd className="font-medium text-slate-900">{c.name}</dd></div>
+            {!readOnly && c.contact_person && <div><dt className="text-xs text-slate-500">Contact person</dt><dd>{c.contact_person}</dd></div>}
+            <div><dt className="text-xs text-slate-500">Country</dt><dd>{c.country}</dd></div>
+            {!readOnly && <div><dt className="text-xs text-slate-500">Company email</dt><dd>{c.email}</dd></div>}
+            {!readOnly && c.address && <div><dt className="text-xs text-slate-500">Address</dt><dd className="whitespace-pre-line">{c.address}</dd></div>}
+          </dl>
+          {!readOnly && <p className="mt-4 text-xs text-slate-500">To update company details, please contact your LEPDO executive.</p>}
+        </section>
+
+
+  </>;
 }

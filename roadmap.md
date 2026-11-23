@@ -1,5 +1,6 @@
+- [x] Reuse existing customer portal/profile/order views for secure read-only customer shares; verified real staff generation, signed-out mobile/desktop access, customer isolation, live updates, revocation, token replacement and unchanged normal customer login.
 - [x] Generate tracking links on the customer Vercel domain; preserve the public route, narrow token-based read access and existing interface.
-- [ ] Redeploy the updated app on Vercel and verify live tracking; blocked by external deployment access (current live /track/:token returns 404).
+- [ ] Redeploy the updated shared-profile app on Vercel and verify live customer sharing; blocked by external deployment access (live tracking path now responds, but this updated version needs deployment).
 - [x] Add secure public order tracking links; verified signed-out read-only access, automatic updates, stable links and denied public writes.
 - [x] Slightly enlarge the Orders table delete control without changing other controls.
 - [x] Add default-off Configuration override for editing running order steps; verified initial editing, running-order lock, rejected direct rename, saved override, successful insertion and restored off state.
@@ -17,3 +18,8 @@
 - [x] Extend order workflows, payment verification gates and staff attention filters.
 - [x] Verify customer-to-staff actions and run focused tests.
 - [x] Add supplied legal terms, version 1.0 effective 20 November 2026.- [x] Order workflow v2: approvals, final invoice, metal supply, photography, document preview.
+
+- [x] Add per-order stage and field customization in Update Progress, independent of the existing switch.
+- [x] Add type-specific universal workflows and reset, preserving progress and historical records.
+- [x] Make descriptive form fields optional; blank orders use Unassigned customer, while authentication, file safety and relationship integrity remain required.
+- [x] Verify individual and universal saves, existing/future orders, confirmed reset, preserved history, mobile screens, denied customer/anonymous writes and 23 focused tests; remove temporary records and restore original definitions/settings.

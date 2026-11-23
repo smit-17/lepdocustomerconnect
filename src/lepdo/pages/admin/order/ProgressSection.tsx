@@ -7,9 +7,11 @@ import { useToast } from '../../../components/Toast';
 import { orderKeys, uploadDocument, useSettings } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { StepControls, stageHasControls } from './WorkflowSection';
+import { WorkflowEditor } from '../../../components/WorkflowEditor';
+import { orderWorkflow, schemaForStage } from '../../../lib/workflow-editor';
 import { supabase } from '../../../lib/supabase';
 import { errorMessage, fmtDate, timeAgo } from '../../../lib/format';
-import { STAGE_STATUS, STAGE_STATUS_OPTIONS, docTypeForStage, stageDetails, canEditOrderSteps, moveStageIds, validateNewStageName } from '../../../lib/workflows';
+import { STAGE_STATUS, STAGE_STATUS_OPTIONS, docTypeForStage, canEditOrderSteps, moveStageIds, validateNewStageName } from '../../../lib/workflows';
 import type { OrderListRow, OrderUpdate, Stage, StageStatus } from '../../../lib/types';
 
 export function ProgressSection({ order, stages, updates, onUpdate }: { order: OrderListRow; stages: Stage[]; updates: OrderUpdate[]; onUpdate: (stageId?: string) => void }) {
@@ -55,8 +57,7 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
     return mutate(() => supabase.rpc('staff_reorder_stages', { p_order_id: order.id, p_stage_ids: ids }), 'Step order saved');
   }
   async function saveRename(id: string) {
-    const name = renameValue.trim();
-    if (!name) return toast.error('Step name is required.');
+    const name = renameValue.trim() || 'Untitled step';
     await mutate(() => supabase.rpc('staff_rename_stage', { p_stage_id: id, p_name: name.slice(0, 120) }), 'Step renamed');
     setRenameId(null);
   }
@@ -113,7 +114,7 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
         {addSlot('start')}
         {stages.map((s, i) => {
           const isCurrent = order.status === 'active' && s.stage_key === order.current_stage_key && s.status !== 'completed';
-          const defs = stageDetails(order.order_type, s.stage_key);
+          const defs = schemaForStage(order.order_type, s).fields;
           const ticked = defs.filter((d) => s.details?.[d.key]);
           const last = i === stages.length - 1;
           return (
@@ -150,6 +151,7 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
                 )}
                 </div>
                 )}
+                {s.ui_schema?.description && <p className="mt-1 text-sm text-muted-foreground">{s.ui_schema.description}</p>}
                 {s.customer_note && <p className="mt-0.5 text-[13px] text-slate-600">“{s.customer_note}”</p>}
                 {(defs.length > 0 || (showControls && stageHasControls(order, s.stage_key))) && (
                   <div className="mt-1">
@@ -161,7 +163,7 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
                         {defs.map((d) => (
                           <li key={d.key} className="flex items-center gap-2 text-xs">
                             {s.details?.[d.key] ? <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={3} /> : <span className="ml-0.5 h-2.5 w-2.5 rounded-full border border-slate-300" />}
-                            <span className={s.details?.[d.key] ? 'text-slate-700' : 'text-slate-400'}>{d.label}</span>
+                            <span className={s.details?.[d.key] ? 'text-slate-700' : 'text-slate-400'}>{d.label}{d.type !== 'checkbox' && s.details?.[d.key] ? `: ${s.details[d.key]}` : ''}</span>
                           </li>
                         ))}
                       </ul>
@@ -209,6 +211,8 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
 export function UpdateProgressDrawer({ open, onClose, order, stages, initialStageId }: { open: boolean; onClose: () => void; order: OrderListRow; stages: Stage[]; initialStageId?: string }) {
   const qc = useQueryClient();
   const toast = useToast();
+  const { isAdmin } = useAuth();
+  const [customizing, setCustomizing] = useState(false);
   const [stageId, setStageId] = useState('');
   const [status, setStatus] = useState<StageStatus>('completed');
   const [details, setDetails] = useState<Record<string, string>>({});
@@ -231,6 +235,7 @@ export function UpdateProgressDrawer({ open, onClose, order, stages, initialStag
     if (!open) return;
     const fallback = stages.find((s) => s.stage_key === order.current_stage_key) || stages[0];
     pickStage(initialStageId || fallback?.id || '');
+    setCustomizing(false);
     setNote('');
     setVisible(true);
     setFile(null);
@@ -268,7 +273,7 @@ export function UpdateProgressDrawer({ open, onClose, order, stages, initialStag
     }
   }
 
-  const defs = stage ? stageDetails(order.order_type, stage.stage_key) : [];
+  const defs = stage ? schemaForStage(order.order_type, stage).fields : [];
 
   return (
     <Drawer
@@ -278,10 +283,16 @@ export function UpdateProgressDrawer({ open, onClose, order, stages, initialStag
       subtitle={`${order.reference} · ${order.customer_name}`}
       footer={<>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
-        <Button variant="primary" type="submit" form="progress-form" loading={busy}>Save Update</Button>
+        {!customizing && <Button variant="primary" type="submit" form="progress-form" loading={busy}>Save Update</Button>}
       </>}
     >
-      <form id="progress-form" onSubmit={save} className="space-y-5">
+      {isAdmin && <Button className="mb-4" icon={<Pencil className="h-4 w-4" />} onClick={() => setCustomizing(v => !v)}>{customizing ? 'Back to progress' : 'Customize order stages'}</Button>}
+      {customizing ? <WorkflowEditor initial={orderWorkflow(order.order_type, stages)} onSave={async definition => {
+        const { error } = await supabase.rpc('admin_save_order_workflow', { p_order_id: order.id, p_definition: definition });
+        if (error) throw error;
+        await Promise.all(orderKeys(order.id).map(k => qc.invalidateQueries({ queryKey: k })));
+        onClose();
+      }} /> : <form id="progress-form" onSubmit={save} className="space-y-5">
         <Field label="Stage">
           <Select value={stageId} onChange={(e) => pickStage(e.target.value)}>
             {stages.map((s, i) => <option key={s.id} value={s.id}>{i + 1}. {s.name}{s.status === 'completed' ? ' ✓' : ''}</option>)}
@@ -314,21 +325,14 @@ export function UpdateProgressDrawer({ open, onClose, order, stages, initialStag
         {defs.length > 0 && (
           <Field label="Details (optional)" group>
             <div className="space-y-1.5 rounded-lg border border-slate-200 p-3">
-              {defs.map((d) => (
-                <label key={d.key} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 accent-[#2329A8]"
-                    checked={!!details[d.key]}
-                    onChange={(e) => setDetails((cur) => {
-                      const next = { ...cur };
-                      if (e.target.checked) next[d.key] = new Date().toISOString(); else delete next[d.key];
-                      return next;
-                    })}
-                  />
-                  {d.label}
+              {defs.map(d => d.type === 'checkbox' ? (
+                <label key={d.key} className="flex cursor-pointer items-center gap-2.5 text-sm text-foreground">
+                  <input type="checkbox" className="h-4 w-4" checked={!!details[d.key]} onChange={e => setDetails(cur => ({ ...cur, [d.key]: e.target.checked ? new Date().toISOString() : '' }))} />
+                  <span>{d.label}{d.description && <span className="block text-xs text-muted-foreground">{d.description}</span>}</span>
                 </label>
-              ))}
+              ) : <Field key={d.key} label={d.label} hint={d.description}>
+                {d.type === 'textarea' ? <Textarea value={details[d.key] ?? ''} onChange={e => setDetails(cur => ({ ...cur, [d.key]: e.target.value }))} /> : <Input type={d.type} value={details[d.key] ?? ''} onChange={e => setDetails(cur => ({ ...cur, [d.key]: e.target.value }))} />}
+              </Field>)}
             </div>
           </Field>
         )}
@@ -343,7 +347,7 @@ export function UpdateProgressDrawer({ open, onClose, order, stages, initialStag
           <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border file:border-slate-200 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-indigo" />
         </Field>
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      </form>
+      </form>}
     </Drawer>
   );
 }

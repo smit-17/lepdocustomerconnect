@@ -219,6 +219,6 @@ export function parseInvoiceAmount(amount: string): number | null {
 
 export function validateNewStageName(value: string): string {
   const name = value.trim();
-  if (!name || [...name].length > 120) throw new Error('Step name must contain 1 to 120 characters.');
-  return name;
+  if ([...name].length > 120) throw new Error('Step name must contain at most 120 characters.');
+  return name || 'Untitled step';
 }
