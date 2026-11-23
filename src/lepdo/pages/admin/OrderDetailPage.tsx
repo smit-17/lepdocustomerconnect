@@ -14,6 +14,7 @@ import { ProgressSection, UpdateProgressDrawer } from './order/ProgressSection';
 import { PaymentsDocsSection } from './order/PaymentsDocsSection';
 import { ShippingSection } from './order/ShippingSection';
 import DeleteOrderButton from '../../components/DeleteOrderButton';
+import ShareOrderButton from '../../components/ShareOrderButton';
 
 export default function OrderDetailPage() {
   const { id = '' } = useParams();
@@ -70,6 +71,7 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="relative flex shrink-0 flex-wrap items-center gap-2">
+          <ShareOrderButton orderId={o.id} />
           <Button icon={<Pencil className="h-4 w-4" />} onClick={() => setEditOpen(true)}>Edit</Button>
           <Button variant="primary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => setProgress({ open: true })} disabled={o.status === 'cancelled'}>Update Progress</Button>
           {(o.status === 'active' || !actionsLocked) && <button onClick={() => setMenu((v) => !v)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50" aria-label="More actions"><Ellipsis className="h-4 w-4" /></button>}

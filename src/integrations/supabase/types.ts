@@ -520,6 +520,36 @@ export type Database = {
           },
         ]
       }
+      order_tracking_links: {
+        Row: {
+          order_id: string
+          token: string
+        }
+        Insert: {
+          order_id: string
+          token: string
+        }
+        Update: {
+          order_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_tracking_links_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "order_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_tracking_links_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_updates: {
         Row: {
           created_at: string
@@ -1310,6 +1340,7 @@ export type Database = {
         Returns: undefined
       }
       promote_to_admin: { Args: { p_email: string }; Returns: string }
+      public_track_order: { Args: { p_token: string }; Returns: Json }
       recompute_order_payments: {
         Args: { p_order_id: string }
         Returns: undefined
@@ -1361,6 +1392,7 @@ export type Database = {
         }
         Returns: string
       }
+      staff_share_order: { Args: { p_order_id: string }; Returns: string }
       team_sees_all: { Args: never; Returns: boolean }
       try_uuid: { Args: { p: string }; Returns: string }
     }

@@ -20,6 +20,7 @@ import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PortalExecutiveRouteImport } from './routes/portal.executive'
 import { Route as PortalProfileRouteImport } from './routes/portal.profile'
 import { Route as PortalTermsRouteImport } from './routes/portal.terms'
+import { Route as TrackTokenRouteImport } from './routes/track.$token'
 import { Route as AdminCustomersIndexRouteImport } from './routes/admin.customers.index'
 import { Route as AdminCustomersIdRouteImport } from './routes/admin.customers.$id'
 import { Route as AdminOrdersIndexRouteImport } from './routes/admin.orders.index'
@@ -81,6 +82,11 @@ const PortalTermsRoute = PortalTermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => PortalRoute,
 } as any)
+const TrackTokenRoute = TrackTokenRouteImport.update({
+  id: '/track/$token',
+  path: '/track/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCustomersIndexRoute = AdminCustomersIndexRouteImport.update({
   id: '/customers/',
   path: '/customers/',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/portal/executive': typeof PortalExecutiveRoute
   '/portal/profile': typeof PortalProfileRoute
   '/portal/terms': typeof PortalTermsRoute
+  '/track/$token': typeof TrackTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/admin/customers/$id': typeof AdminCustomersIdRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/portal/executive': typeof PortalExecutiveRoute
   '/portal/profile': typeof PortalProfileRoute
   '/portal/terms': typeof PortalTermsRoute
+  '/track/$token': typeof TrackTokenRoute
   '/admin': typeof AdminIndexRoute
   '/portal': typeof PortalIndexRoute
   '/admin/customers/$id': typeof AdminCustomersIdRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/portal/executive': typeof PortalExecutiveRoute
   '/portal/profile': typeof PortalProfileRoute
   '/portal/terms': typeof PortalTermsRoute
+  '/track/$token': typeof TrackTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/admin/customers/$id': typeof AdminCustomersIdRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/portal/executive'
     | '/portal/profile'
     | '/portal/terms'
+    | '/track/$token'
     | '/admin/'
     | '/portal/'
     | '/admin/customers/$id'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/portal/executive'
     | '/portal/profile'
     | '/portal/terms'
+    | '/track/$token'
     | '/admin'
     | '/portal'
     | '/admin/customers/$id'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/portal/executive'
     | '/portal/profile'
     | '/portal/terms'
+    | '/track/$token'
     | '/admin/'
     | '/portal/'
     | '/admin/customers/$id'
@@ -221,6 +233,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PortalRoute: typeof PortalRouteWithChildren
   SetPasswordRoute: typeof SetPasswordRoute
+  TrackTokenRoute: typeof TrackTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -301,6 +314,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/portal/terms'
       preLoaderRoute: typeof PortalTermsRouteImport
       parentRoute: typeof PortalRoute
+    }
+    '/track/$token': {
+      id: '/track/$token'
+      path: '/track/$token'
+      fullPath: '/track/$token'
+      preLoaderRoute: typeof TrackTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/customers/': {
       id: '/admin/customers/'
@@ -385,6 +405,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PortalRoute: PortalRouteWithChildren,
   SetPasswordRoute: SetPasswordRoute,
+  TrackTokenRoute: TrackTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

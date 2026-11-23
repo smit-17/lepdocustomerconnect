@@ -1,3 +1,7 @@
+- [x] Generate tracking links on the customer Vercel domain; preserve the public route, narrow token-based read access and existing interface.
+- [ ] Redeploy the updated app on Vercel and verify live tracking; blocked by external deployment access (current live /track/:token returns 404).
+- [x] Add secure public order tracking links; verified signed-out read-only access, automatic updates, stable links and denied public writes.
+- [x] Slightly enlarge the Orders table delete control without changing other controls.
 - [x] Add default-off Configuration override for editing running order steps; verified initial editing, running-order lock, rejected direct rename, saved override, successful insertion and restored off state.
 - [x] Hide Reopen, Cancel and Delete on completed orders and completed shipping handovers; verified both cases and removed the temporary order.
 - [x] Add administrator order deletion and Reset History, preserving customer records and accounts.

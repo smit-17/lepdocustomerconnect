@@ -47,3 +47,5 @@ use the editor.
 - Destructive history actions use an admin-validated transactional RPC and authenticated server function; storage cleanup uses only returned order file paths. Why: preserve customer records and delete dependent order rows atomically.
 - Order action visibility shares one workflow predicate; order lists load completed handovers in one batched query. Why: match detail and list controls without per-row requests.
 - Step editing uses stage progress and a persisted admin configuration override, enforced by a shared database guard in all four step RPCs. Why: disabling the switch must block open editors and direct requests too.
+- Public tracking uses private per-order tokens, staff-authorized generation and a narrow read-only RPC; the standalone view refreshes every five seconds. Why: share progress without granting table access or exposing internal order data.
+- Generate customer tracking URLs through the shared validated URL helper, never the browser origin. Why: preview access restrictions must not affect customer links.

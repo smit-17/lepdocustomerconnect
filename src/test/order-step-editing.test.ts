@@ -8,7 +8,6 @@ describe('Uploaded order-step changes', () => {
     expect(validateNewStageName('A'.repeat(120))).toHaveLength(120);
     expect(() => validateNewStageName('   ')).toThrow();
     expect(() => validateNewStageName('A'.repeat(121))).toThrow();
-    
   });
   it('allows only administrators to edit steps', () => {
     expect(canEditOrderSteps(true, 'active')).toBe(true);

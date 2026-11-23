@@ -113,6 +113,20 @@
       "when": 1795323529199,
       "tag": "0015_grant_running_order_configuration_update",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795338051020,
+      "tag": "0016_restrict_app_settings_read",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795413493208,
+      "tag": "0017_secure_order_tracking_links",
+      "breakpoints": true
     }
   ]
 }
