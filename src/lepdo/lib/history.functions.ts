@@ -9,6 +9,9 @@ export const deleteOrderHistory = createServerFn({ method: 'POST' })
     z.object({ kind: z.literal('reset'), confirmation: z.literal('RESET HISTORY') }),
   ]).parse(input))
   .handler(async ({ data, context }) => {
+    const { forwardAccountAction } = await import('./account-actions.server');
+    const remote = await forwardAccountAction<{ deletedCount: number; cleanupPending: boolean }>('deleteHistory', data);
+    if (remote.forwarded) return remote.result;
     const { removeHistory } = await import('./history.server');
     return removeHistory({ rpc: (name, args) => name === 'is_admin' || name === 'is_operator'
       ? context.supabase.rpc(name)

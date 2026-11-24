@@ -26,6 +26,7 @@ import { Route as AdminCustomersIndexRouteImport } from './routes/admin.customer
 import { Route as AdminCustomersIdRouteImport } from './routes/admin.customers.$id'
 import { Route as AdminOrdersIndexRouteImport } from './routes/admin.orders.index'
 import { Route as AdminOrdersIdRouteImport } from './routes/admin.orders.$id'
+import { Route as ApiPublicAccountActionsRouteImport } from './routes/api/public/account-actions'
 import { Route as PortalOrdersIdRouteImport } from './routes/portal.orders.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -113,6 +114,11 @@ const AdminOrdersIdRoute = AdminOrdersIdRouteImport.update({
   path: '/orders/$id',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPublicAccountActionsRoute = ApiPublicAccountActionsRouteImport.update({
+  id: '/api/public/account-actions',
+  path: '/api/public/account-actions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalOrdersIdRoute = PortalOrdersIdRouteImport.update({
   id: '/orders/$id',
   path: '/orders/$id',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/portal/': typeof PortalIndexRoute
   '/admin/customers/$id': typeof AdminCustomersIdRoute
   '/admin/orders/$id': typeof AdminOrdersIdRoute
+  '/api/public/account-actions': typeof ApiPublicAccountActionsRoute
   '/portal/orders/$id': typeof PortalOrdersIdRoute
   '/admin/customers/': typeof AdminCustomersIndexRoute
   '/admin/orders/': typeof AdminOrdersIndexRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/portal': typeof PortalIndexRoute
   '/admin/customers/$id': typeof AdminCustomersIdRoute
   '/admin/orders/$id': typeof AdminOrdersIdRoute
+  '/api/public/account-actions': typeof ApiPublicAccountActionsRoute
   '/portal/orders/$id': typeof PortalOrdersIdRoute
   '/admin/customers': typeof AdminCustomersIndexRoute
   '/admin/orders': typeof AdminOrdersIndexRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/portal/': typeof PortalIndexRoute
   '/admin/customers/$id': typeof AdminCustomersIdRoute
   '/admin/orders/$id': typeof AdminOrdersIdRoute
+  '/api/public/account-actions': typeof ApiPublicAccountActionsRoute
   '/portal/orders/$id': typeof PortalOrdersIdRoute
   '/admin/customers/': typeof AdminCustomersIndexRoute
   '/admin/orders/': typeof AdminOrdersIndexRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/portal/'
     | '/admin/customers/$id'
     | '/admin/orders/$id'
+    | '/api/public/account-actions'
     | '/portal/orders/$id'
     | '/admin/customers/'
     | '/admin/orders/'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/portal'
     | '/admin/customers/$id'
     | '/admin/orders/$id'
+    | '/api/public/account-actions'
     | '/portal/orders/$id'
     | '/admin/customers'
     | '/admin/orders'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/portal/'
     | '/admin/customers/$id'
     | '/admin/orders/$id'
+    | '/api/public/account-actions'
     | '/portal/orders/$id'
     | '/admin/customers/'
     | '/admin/orders/'
@@ -247,6 +259,7 @@ export interface RootRouteChildren {
   SetPasswordRoute: typeof SetPasswordRoute
   PortalShareTokenRoute: typeof PortalShareTokenRoute
   TrackTokenRoute: typeof TrackTokenRoute
+  ApiPublicAccountActionsRoute: typeof ApiPublicAccountActionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -370,6 +383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrdersIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/public/account-actions': {
+      id: '/api/public/account-actions'
+      path: '/api/public/account-actions'
+      fullPath: '/api/public/account-actions'
+      preLoaderRoute: typeof ApiPublicAccountActionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal/orders/$id': {
       id: '/portal/orders/$id'
       path: '/orders/$id'
@@ -427,6 +447,7 @@ const rootRouteChildren: RootRouteChildren = {
   SetPasswordRoute: SetPasswordRoute,
   PortalShareTokenRoute: PortalShareTokenRoute,
   TrackTokenRoute: TrackTokenRoute,
+  ApiPublicAccountActionsRoute: ApiPublicAccountActionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

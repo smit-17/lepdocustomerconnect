@@ -23,6 +23,9 @@ export const inviteUser = createServerFn({ method: 'POST' })
       throw new Error('Only LEPDO team members can send invitations.');
     }
 
+    const { forwardAccountAction } = await import('./account-actions.server');
+    const remote = await forwardAccountAction<{ ok: boolean; status: 'invited' | 'resent'; email: string }>('inviteUser', body);
+    if (remote.forwarded) return remote.result;
     const { supabaseAdmin: admin } = await import('@/integrations/supabase/client.server');
     const redirectTo =
       typeof body.redirect_to === 'string' && /^https?:\/\/[^\s]+\/set-password$/.test(body.redirect_to) ? body.redirect_to : undefined;
@@ -99,6 +102,9 @@ export const changeTeamEmail = createServerFn({ method: 'POST' })
   .handler(async ({ data: body, context }) => {
     const { data: allowed, error: roleError } = await context.supabase.rpc('is_admin');
     if (roleError || !allowed) throw new Error('Only administrators can change email addresses.');
+    const { forwardAccountAction } = await import('./account-actions.server');
+    const remote = await forwardAccountAction<{ ok: boolean }>('changeTeamEmail', body);
+    if (remote.forwarded) return remote.result;
     const { supabaseAdmin: admin } = await import('@/integrations/supabase/client.server');
     const email = String(body.email || '').trim().toLowerCase();
     if (!EMAIL_RE.test(email)) throw new Error('A valid email address is required.');
