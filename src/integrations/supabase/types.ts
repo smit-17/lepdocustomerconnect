@@ -1429,6 +1429,7 @@ export type Database = {
         Args: { p_confirmation?: string; p_order_id?: string }
         Returns: Json
       }
+      admin_delete_seller: { Args: { p_user_id: string }; Returns: undefined }
       admin_get_workflow: { Args: { p_type: string }; Returns: Json }
       admin_manage_seller: {
         Args: {
