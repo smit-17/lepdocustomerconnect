@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
 import type { Profile } from './types';
+import { accountAccess } from './seller-access';
 
 interface AuthState {
   session: Session | null;
@@ -10,6 +11,7 @@ interface AuthState {
   loading: boolean;
   isStaff: boolean;
   isAdmin: boolean;
+  isOperator: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -27,8 +29,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       return;
     }
-    const { data } = await supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle();
-    setProfile((data as Profile) ?? null);
+    const [{ data }, { data: role }, { data: request }] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', s.user.id).maybeSingle(),
+      supabase.from('seller_requests').select('status').eq('user_id', s.user.id).maybeSingle(),
+    ]);
+    // Fail closed if the protected authoritative role cannot be read.
+    setProfile(data && role ? { ...data, role: role.role, seller_status: request?.status ?? null } as Profile : null);
   }, []);
 
   useEffect(() => {
@@ -60,8 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     profile,
     loading,
-    isStaff: !!profile && profile.is_active && (profile.role === 'admin' || profile.role === 'team'),
-    isAdmin: !!profile && profile.is_active && profile.role === 'admin',
+    isStaff: !!profile && accountAccess(profile.role, profile.is_active, profile.seller_status).isStaff,
+    isAdmin: !!profile && accountAccess(profile.role, profile.is_active, profile.seller_status).isAdmin,
+    isOperator: !!profile && accountAccess(profile.role, profile.is_active, profile.seller_status).isOperator,
     refreshProfile: () => loadProfile(session),
     signOut: async () => {
       await supabase.auth.signOut();

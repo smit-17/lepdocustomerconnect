@@ -23,7 +23,7 @@ export function PaymentsDocsSection({ order, payments, documents, onEditAmounts 
   const [uploadOpen, setUploadOpen] = useState(false);
   const toast = useToast();
   const invalidate = useInvalidate(order.id);
-  const { isAdmin, profile } = useAuth();
+  const { isOperator, profile } = useAuth();
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function markReceived(p: Payment) {
@@ -104,7 +104,7 @@ export function PaymentsDocsSection({ order, payments, documents, onEditAmounts 
                   {p.notes && <p className="text-xs italic text-slate-500">{p.notes}</p>}
                 </div>
                 <Badge tone={PAYMENT_STATUS[p.status].tone}>{PAYMENT_STATUS[p.status].label}</Badge>
-                {p.status === 'initiated' && isAdmin && (
+                {p.status === 'initiated' && isOperator && (
                   <Button size="sm" variant="indigo" icon={<Check className="h-3.5 w-3.5" />} loading={busyId === p.id} onClick={() => markReceived(p)}>Mark received</Button>
                 )}
                 <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-brand-indigo" onClick={() => setPayDrawer({ open: true, payment: p })} aria-label="Edit payment"><Pencil className="h-3.5 w-3.5" /></button>
@@ -141,7 +141,7 @@ export function PaymentsDocsSection({ order, payments, documents, onEditAmounts 
                   {d.customer_visible ? 'Customer' : 'Internal'}
                 </button>
                 <button onClick={() => download(d)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-brand-indigo" aria-label="Download"><Download className="h-4 w-4" /></button>
-                {(isAdmin || d.created_by === profile?.id) && (
+                {(isOperator || d.created_by === profile?.id) && (
                   <button onClick={() => removeDoc(d)} disabled={busyId === d.id} className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="Delete"><Trash className="h-4 w-4" /></button>
                 )}
               </li>
@@ -161,12 +161,12 @@ export function PaymentsDocsSection({ order, payments, documents, onEditAmounts 
 function PaymentDrawer({ open, onClose, order, payment, payments }: { open: boolean; onClose: () => void; order: OrderListRow; payment?: Payment; payments: Payment[] }) {
   const toast = useToast();
   const invalidate = useInvalidate(order.id);
-  const { isAdmin } = useAuth();
+  const { isOperator } = useAuth();
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today());
   const [method, setMethod] = useState('bank_transfer');
   const [ptype, setPtype] = useState('advance');
-  const [status, setStatus] = useState<PaymentStatus>(isAdmin ? 'confirmed' : 'initiated');
+  const [status, setStatus] = useState<PaymentStatus>(isOperator ? 'confirmed' : 'initiated');
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -183,7 +183,7 @@ function PaymentDrawer({ open, onClose, order, payment, payments }: { open: bool
     } else {
       const hasConfirmed = payments.some((p) => p.status === 'confirmed');
       setAmount(order.balance_due && order.balance_due > 0 ? String(order.balance_due) : '');
-      setDate(today()); setMethod('bank_transfer'); setPtype(hasConfirmed ? 'final' : 'advance'); setStatus(isAdmin ? 'confirmed' : 'initiated'); setReference(''); setNotes('');
+      setDate(today()); setMethod('bank_transfer'); setPtype(hasConfirmed ? 'final' : 'advance'); setStatus(isOperator ? 'confirmed' : 'initiated'); setReference(''); setNotes('');
     }
   }, [open, payment, payments, order.balance_due]);
 
@@ -233,7 +233,7 @@ function PaymentDrawer({ open, onClose, order, payment, payments }: { open: bool
       title={payment ? 'Edit payment' : 'Record payment'}
       subtitle={`${order.reference} · balance ${money(order.balance_due, order.currency)}`}
       footer={<>
-        {payment && isAdmin && <Button variant="danger" className="mr-auto" onClick={remove} disabled={busy}>Delete</Button>}
+        {payment && isOperator && <Button variant="danger" className="mr-auto" onClick={remove} disabled={busy}>Delete</Button>}
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button variant="primary" type="submit" form="payment-form" loading={busy}>Save payment</Button>
       </>}
@@ -246,7 +246,7 @@ function PaymentDrawer({ open, onClose, order, payment, payments }: { open: bool
         <Field label="Payment status" group>
           <div className="grid grid-cols-3 gap-2">
             {(['initiated', 'confirmed', 'failed'] as PaymentStatus[]).map((s) => (
-              <button key={s} type="button" disabled={!isAdmin && s === 'confirmed'} onClick={() => setStatus(s)}
+              <button key={s} type="button" disabled={!isOperator && s === 'confirmed'} onClick={() => setStatus(s)}
                 className={cx('rounded-lg border px-2 py-2 text-[13px] transition', status === s ? 'border-brand-indigo bg-cream-100 font-medium text-brand-indigo ring-1 ring-brand-indigo' : 'border-slate-200 text-slate-700')}>
                 {PAYMENT_STATUS[s].label}
               </button>

@@ -6,7 +6,7 @@ describe('Order history deletion', () => {
     const rpc = vi.fn().mockResolvedValue({ data: false, error: null });
     const files = vi.fn();
     await expect(removeHistory({ rpc }, files, 'order-id', '')).rejects.toThrow('Only administrators');
-    expect(rpc.mock.calls).toEqual([['is_admin']]);
+    expect(rpc.mock.calls).toEqual([['is_operator']]);
     expect(files).not.toHaveBeenCalled();
   });
   it('requires explicit confirmation for a full reset', async () => {

@@ -6,7 +6,7 @@ type FileClient = {
 };
 
 export async function removeHistory(caller: HistoryClient, files: () => Promise<FileClient>, orderId: string | null, confirmation: string) {
-  const allowed = await caller.rpc('is_admin');
+  const allowed = await caller.rpc(orderId === null ? 'is_admin' : 'is_operator');
   if (allowed.error || allowed.data !== true) throw new Error('Only administrators can delete order history.');
   if (orderId === null && confirmation !== 'RESET HISTORY') throw new Error('Type RESET HISTORY to confirm.');
   const result = await caller.rpc('admin_delete_order_history', { p_order_id: orderId, p_confirmation: confirmation });

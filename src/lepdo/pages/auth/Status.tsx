@@ -2,13 +2,13 @@ import AuthShell from './AuthShell';
 import { Button } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 
-export function AccessIssue({ reason }: { reason: 'inactive' | 'no-customer' }) {
+export function AccessIssue({ reason }: { reason: 'inactive' | 'no-customer' | 'seller-pending' | 'seller-rejected' }) {
   const { signOut, session } = useAuth();
   return (
     <AuthShell>
-      <h2 className="text-2xl font-semibold text-brand-indigo">{reason === 'inactive' ? 'Account not active' : 'Portal access is being set up'}</h2>
+      <h2 className="text-2xl font-semibold text-brand-indigo">{reason === 'seller-pending' ? 'Pending Approval' : reason === 'seller-rejected' ? 'Seller request rejected' : reason === 'inactive' ? 'Account not active' : 'Portal access is being set up'}</h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-600">
-        {reason === 'inactive'
+        {reason === 'seller-pending' ? 'Your seller registration is awaiting admin approval.' : reason === 'seller-rejected' ? 'Your seller registration was rejected. Please contact LEPDO.' : reason === 'inactive'
           ? 'This account has been deactivated or is not yet linked to LEPDO CONNECT. Please contact LEPDO if you believe this is a mistake.'
           : 'Your account is not yet linked to a customer record. Your LEPDO executive will complete this shortly.'}
       </p>

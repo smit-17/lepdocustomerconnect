@@ -10,8 +10,8 @@ export const deleteOrderHistory = createServerFn({ method: 'POST' })
   ]).parse(input))
   .handler(async ({ data, context }) => {
     const { removeHistory } = await import('./history.server');
-    return removeHistory({ rpc: (name, args) => name === 'is_admin'
-      ? context.supabase.rpc('is_admin')
+    return removeHistory({ rpc: (name, args) => name === 'is_admin' || name === 'is_operator'
+      ? context.supabase.rpc(name)
       : context.supabase.rpc('admin_delete_order_history', {
         ...(typeof args?.['p_order_id'] === 'string' ? { p_order_id: args['p_order_id'] } : {}),
         p_confirmation: String(args?.['p_confirmation'] ?? ''),

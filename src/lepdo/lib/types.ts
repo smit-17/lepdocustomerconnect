@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'team' | 'customer';
+export type Role = 'admin' | 'team' | 'customer' | 'seller';
 export type OrderType = 'diamond' | 'jewellery';
 export type OrderStatus = 'active' | 'completed' | 'cancelled';
 export type StageStatus = 'upcoming' | 'in_progress' | 'completed' | 'attention' | 'blocked' | 'not_applicable';
@@ -11,6 +11,7 @@ export interface Profile {
   email: string;
   full_name: string;
   role: Role;
+  seller_status?: import('./seller-access').SellerStatus | null;
   customer_id: string | null;
   job_title: string | null;
   phone: string | null;

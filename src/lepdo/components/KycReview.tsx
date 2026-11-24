@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 import { errorMessage, fmtDate } from '../lib/format';
 
 export function KycReview({ customerId }: { customerId: string }) {
-  const { isAdmin } = useAuth();
+  const { isOperator } = useAuth();
   const qc = useQueryClient();
   const toast = useToast();
   const query = useQuery({ queryKey: ['kyc', customerId], queryFn: () => getKyc(customerId) });
@@ -32,7 +32,7 @@ export function KycReview({ customerId }: { customerId: string }) {
     <ErrorNote error={query.error} />
     <p className="mt-2 text-sm">{record?.status || 'Not Submitted'}{record?.submitted_at && ` · ${fmtDate(record.submitted_at)}`}</p>
     {record?.document_url && <Button className="mt-3" onClick={() => { if (record.document_url) previewKyc(record.document_url).catch(err => toast.error(errorMessage(err))); }}>View KYC document</Button>}
-    {isAdmin && record && <div className="mt-4 space-y-3">
+    {isOperator && record && <div className="mt-4 space-y-3">
       <Field label="Review result"><Select value={status} onChange={e => setStatus(e.target.value)}><option>Approved</option><option>Rejected</option><option>Re-KYC</option></Select></Field>
       {status !== 'Approved' && <Field label="Reason"><Textarea value={reason} onChange={e => setReason(e.target.value)} maxLength={1000} /></Field>}
       <Button variant="indigo" loading={busy} onClick={review}>Save KYC review</Button>

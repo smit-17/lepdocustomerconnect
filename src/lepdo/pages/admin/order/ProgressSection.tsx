@@ -17,7 +17,7 @@ import type { OrderListRow, OrderUpdate, Stage, StageStatus } from '../../../lib
 export function ProgressSection({ order, stages, updates, onUpdate }: { order: OrderListRow; stages: Stage[]; updates: OrderUpdate[]; onUpdate: (stageId?: string) => void }) {
   const [showHistory, setShowHistory] = useState(false);
   const [openDetails, setOpenDetails] = useState<string | null>(null);
-  const { isAdmin } = useAuth();
+  const { isOperator } = useAuth();
   const qc = useQueryClient();
   const toast = useToast();
   const [editing, setEditing] = useState(false);
@@ -28,7 +28,7 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
   const [addAt, setAddAt] = useState<string | null>(null);
   const [addName, setAddName] = useState('');
   const settings = useSettings();
-  const canEdit = !!settings.data && canEditOrderSteps(isAdmin, order.status, stages, settings.data.edit_running_order_steps);
+  const canEdit = !!settings.data && canEditOrderSteps(isOperator, order.status, stages, settings.data.edit_running_order_steps);
   const showControls = order.status === 'active';
 
   useEffect(() => {
@@ -211,7 +211,7 @@ export function ProgressSection({ order, stages, updates, onUpdate }: { order: O
 export function UpdateProgressDrawer({ open, onClose, order, stages, initialStageId }: { open: boolean; onClose: () => void; order: OrderListRow; stages: Stage[]; initialStageId?: string }) {
   const qc = useQueryClient();
   const toast = useToast();
-  const { isAdmin } = useAuth();
+  const { isOperator } = useAuth();
   const [customizing, setCustomizing] = useState(false);
   const [stageId, setStageId] = useState('');
   const [status, setStatus] = useState<StageStatus>('completed');
@@ -286,7 +286,7 @@ export function UpdateProgressDrawer({ open, onClose, order, stages, initialStag
         {!customizing && <Button variant="primary" type="submit" form="progress-form" loading={busy}>Save Update</Button>}
       </>}
     >
-      {isAdmin && <Button className="mb-4" icon={<Pencil className="h-4 w-4" />} onClick={() => setCustomizing(v => !v)}>{customizing ? 'Back to progress' : 'Customize order stages'}</Button>}
+      {isOperator && <Button className="mb-4" icon={<Pencil className="h-4 w-4" />} onClick={() => setCustomizing(v => !v)}>{customizing ? 'Back to progress' : 'Customize order stages'}</Button>}
       {customizing ? <WorkflowEditor initial={orderWorkflow(order.order_type, stages)} onSave={async definition => {
         const { error } = await supabase.rpc('admin_save_order_workflow', { p_order_id: order.id, p_definition: definition });
         if (error) throw error;

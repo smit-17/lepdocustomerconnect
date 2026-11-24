@@ -15,8 +15,9 @@ import { workflowDefinition, type WorkflowDefinition } from '../../lib/workflow-
 import type { OrderType } from '../../lib/types';
 import ResetHistoryButton from '../../components/ResetHistoryButton';
 import { passwordChangeError } from '../../lib/account';
+import SellerRequests from '../../components/SellerRequests';
 
-type Tab = 'company' | 'team' | 'invitations' | 'account' | 'configuration';
+type Tab = 'company' | 'team' | 'invitations' | 'account' | 'configuration' | 'sellers';
 
 interface DirRow {
   id: string; email: string; full_name: string; role: Role; is_active: boolean; customer_id: string | null; customer_name: string | null;
@@ -28,11 +29,11 @@ function useDirectory(enabled: boolean) {
 }
 
 export default function SettingsPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isOperator, profile } = useAuth();
   const [tab, setTab] = useState<Tab>('company');
   const items = isAdmin
-    ? [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'team' as Tab, label: 'Team Members' }, { value: 'invitations' as Tab, label: 'User Invitations' }, { value: 'account' as Tab, label: 'Account Settings' }, { value: 'configuration' as Tab, label: 'Configuration' }]
-    : [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'account' as Tab, label: 'Account Settings' }];
+    ? [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'team' as Tab, label: 'Team Members' }, { value: 'invitations' as Tab, label: 'User Invitations' }, { value: 'account' as Tab, label: 'Account Settings' }, { value: 'configuration' as Tab, label: 'Configuration' }, { value: 'sellers' as Tab, label: 'Seller Requests' }]
+    : profile?.role === 'seller' ? [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'configuration' as Tab, label: 'Configuration' }] : [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'account' as Tab, label: 'Account Settings' }];
   return (
     <>
       <PageHeader title="Settings" />
@@ -40,8 +41,9 @@ export default function SettingsPage() {
       {tab === 'company' && <CompanyProfile />}
       {tab === 'team' && isAdmin && <TeamMembers />}
       {tab === 'invitations' && isAdmin && <Invitations />}
-      {tab === 'account' && <AccountSettings />}
-      {tab === 'configuration' && isAdmin && <Configuration />}
+      {tab === 'account' && profile?.role !== 'seller' && <AccountSettings />}
+      {tab === 'configuration' && isOperator && <Configuration />}
+      {tab === 'sellers' && isAdmin && <SellerRequests />}
     </>
   );
 }
@@ -90,7 +92,7 @@ function UniversalWorkflows() {
 
 /* ================================================================ Company */
 function CompanyProfile() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isOperator } = useAuth();
   const { data, isLoading } = useSettings();
   const qc = useQueryClient();
   const toast = useToast();
@@ -119,7 +121,7 @@ function CompanyProfile() {
   return (
     <Card className="max-w-2xl" title="Company Profile">
       <form onSubmit={save} className="space-y-4">
-        <fieldset disabled={!isAdmin} className="space-y-4">
+        <fieldset disabled={!isOperator} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Company name"><Input value={f.company_name} onChange={set('company_name')} maxLength={120} /></Field>
             <Field label="Tagline"><Input value={f.tagline} onChange={set('tagline')} maxLength={200} /></Field>
@@ -132,13 +134,13 @@ function CompanyProfile() {
           <Field label="Default currency for new orders">
             <Select value={f.default_currency} onChange={set('default_currency')} className="max-w-[140px]">{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</Select>
           </Field>
-          <div className="rounded-lg border border-slate-200 p-4">
+          {isAdmin && <div className="rounded-lg border border-slate-200 p-4">
             <Toggle checked={f.team_sees_all} onChange={(v) => isAdmin && setF((x) => ({ ...x, team_sees_all: v }))}
               label="Team members can see all customers and orders"
               hint="Off: team members only see customers and orders assigned to or created by them. Administrators always see everything." />
-          </div>
+          </div>}
         </fieldset>
-        {isAdmin ? <Button type="submit" variant="primary" loading={busy}>Save</Button> : <p className="text-xs text-slate-500">Only administrators can change company settings.</p>}
+        {isOperator ? <Button type="submit" variant="primary" loading={busy}>Save</Button> : <p className="text-xs text-slate-500">Only administrators can change company settings.</p>}
       </form>
     </Card>
   );
@@ -159,7 +161,7 @@ function TeamMembers() {
   const [inv, setInv] = useState({ full_name: '', email: '', phone: '', role: 'team' as 'team' | 'admin' });
   const [busy, setBusy] = useState<string | null>(null);
   const [editing, setEditing] = useState<DirRow | null>(null);
-  const staff = (dir.data || []).filter((r) => r.role !== 'customer');
+  const staff = (dir.data || []).filter((r) => r.role === 'admin' || r.role === 'team');
 
   const refresh = () => { qc.invalidateQueries({ queryKey: keys.directory }); qc.invalidateQueries({ queryKey: keys.staff }); };
 

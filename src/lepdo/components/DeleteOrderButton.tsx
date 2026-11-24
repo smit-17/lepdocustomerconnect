@@ -9,12 +9,12 @@ import { deleteOrderHistory } from '../lib/history.functions';
 import { errorMessage } from '../lib/format';
 
 export default function DeleteOrderButton({ orderId, reference, locked, onDeleted, enlarged = false }: { orderId: string; reference: string; locked: boolean; onDeleted?: () => void; enlarged?: boolean }) {
-  const { isAdmin } = useAuth();
+  const { isOperator } = useAuth();
   const [busy, setBusy] = useState(false);
   const remove = useServerFn(deleteOrderHistory);
   const qc = useQueryClient();
   const toast = useToast();
-  if (!isAdmin || locked) return null;
+  if (!isOperator || locked) return null;
   return <Button variant="danger" size={enlarged ? 'md' : 'sm'} className={enlarged ? 'w-10 px-0!' : 'w-8 px-0'} title="Delete order" aria-label={`Delete order ${reference}`} loading={busy} icon={<Trash2 className={enlarged ? 'h-5 w-5 shrink-0' : 'h-4 w-4'} />} onClick={async (e) => {
     e.preventDefault();
     e.stopPropagation();

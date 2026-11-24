@@ -1036,6 +1036,45 @@ export type Database = {
           },
         ]
       }
+      seller_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shipments: {
         Row: {
           courier: string
@@ -1187,6 +1226,21 @@ export type Database = {
           effective_date?: string
           published?: boolean
           version?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          role: string
+          user_id: string
+        }
+        Insert: {
+          role: string
+          user_id: string
+        }
+        Update: {
+          role?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1343,6 +1397,10 @@ export type Database = {
         Returns: Json
       }
       admin_get_workflow: { Args: { p_type: string }; Returns: Json }
+      admin_review_seller: {
+        Args: { p_status: string; p_user_id: string }
+        Returns: undefined
+      }
       admin_save_order_workflow: {
         Args: { p_definition: Json; p_order_id: string }
         Returns: undefined
@@ -1390,6 +1448,7 @@ export type Database = {
       customer_owns_active_order: { Args: { oid: string }; Returns: boolean }
       customer_portal_status: { Args: { cid: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_operator: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       my_customer_id: { Args: never; Returns: string }
       original_workflow: { Args: { p_type: string }; Returns: Json }

@@ -1,3 +1,5 @@
+- [x] Add seller signup, admin-only approval requests, and approved seller operational permissions; verify signup, admin request display, cancellation, persisted rejection and 23 focused tests.
+- [ ] Verify approved-seller dashboard access and direct permission denials end-to-end; blocked by declined temporary-seller sign-in permission. Temporary Seller Approval Check request remains rejected and inactive.
 - [x] Remove demo sign-in content; update the existing administrator through Auth without changing its ID, permissions or profile; verify Settings password changes and canonical profile email.
 - [x] Delete the four user-confirmed test orders, their files, demo company, and demo Executive/Customer accounts; preserve the existing administrator.
 - [ ] Enable/confirm Secure email change in More → Users → Auth settings → Email, then verify old/new mailbox links; blocked by the user-managed setting and mailbox access.
