@@ -7,8 +7,11 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth';
 import { errorMessage } from '../../lib/format';
 import { AccessIssue } from './Status';
+import { SELLER_VERIFICATION_URL } from '../../lib/seller-management';
+import { useServerFn } from '@tanstack/react-start';
+import { registerSeller } from '../../lib/seller.functions';
 
-type Mode = 'password' | 'link' | 'forgot' | 'signup' | 'seller';
+type Mode = 'password' | 'link' | 'forgot' | 'signup' | 'seller' | 'verify';
 
 export default function LoginPage() {
   const { session, profile, loading } = useAuth();
@@ -17,13 +20,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
-  const [phone, setPhone] = useState('');
+  const submitSeller = useServerFn(registerSeller);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<string | null>(null);
 
   if (!loading && session && profile) {
     if (profile.role === 'seller' && profile.seller_status !== 'approved') return <AccessIssue reason={profile.seller_status === 'rejected' ? 'seller-rejected' : 'seller-pending'} />;
+    if (profile.role === 'seller' && !profile.is_active) return <AccessIssue reason="inactive" />;
     return <Navigate to={profile.role === 'customer' ? '/portal' : '/admin'} replace />;
   }
 
@@ -37,11 +41,19 @@ export default function LoginPage() {
     try {
       if (mode === 'password') {
         const { error } = await supabase.auth.signInWithPassword({ email: addr, password });
-        if (error) throw new Error(error.message === 'Invalid login credentials' ? 'Incorrect email or password.' : error.message);
-      } else if (mode === 'signup' || mode === 'seller') {
-        const { data, error } = await supabase.auth.signUp({ email: addr, password, options: { emailRedirectTo: `${window.location.origin}/${mode === 'seller' ? 'login' : 'portal'}`, data: mode === 'seller' ? { full_name: fullName.trim(), phone: phone.trim(), seller_signup: 'true' } : { full_name: fullName.trim(), company_name: company.trim(), self_signup: 'true' } } });
+        if (error) throw new Error(error.message === 'Invalid login credentials' ? 'Incorrect email or password.' : /banned/i.test(error.message) ? 'Seller access requires admin approval and an active account.' : error.message);
+      } else if (mode === 'seller') {
+        await submitSeller({ data: { full_name: fullName, email: addr, password } });
+        setPassword('');
+        setSent('Seller registration submitted. Pending Approval. You can sign in with your email and password once Admin approves.');
+      } else if (mode === 'signup') {
+        const { data, error } = await supabase.auth.signUp({ email: addr, password, options: { emailRedirectTo: `${window.location.origin}/portal`, data: { full_name: fullName.trim(), company_name: company.trim(), self_signup: 'true' } } });
         if (error) throw error;
-        if (!data.session) setSent(mode === 'seller' ? 'Seller registration submitted. Pending Approval. Please confirm your email; dashboard access requires admin approval.' : 'Account created. Please check your email to confirm, then sign in.');
+        if (!data.session) setSent('Account created. Please check your email to confirm, then sign in.');
+      } else if (mode === 'verify') {
+        const { error } = await supabase.auth.resend({ type: 'signup', email: addr, options: { emailRedirectTo: SELLER_VERIFICATION_URL } });
+        if (error) throw error;
+        setSent('If this account needs verification, a confirmation link has been sent. Check your inbox and spam folder.');
       } else if (mode === 'link') {
         const { error } = await supabase.auth.signInWithOtp({ email: addr, options: { shouldCreateUser: false, emailRedirectTo: window.location.origin } });
         if (error) throw error;
@@ -62,7 +74,7 @@ export default function LoginPage() {
   return (
     <AuthShell>
       <h2 className="text-2xl font-semibold tracking-tight text-brand-indigo">
-        {mode === 'forgot' ? 'Reset your password' : mode === 'seller' ? 'Register as Seller' : mode === 'signup' ? 'Create customer account' : 'Sign in'}
+        {mode === 'verify' ? 'Verify your email' : mode === 'forgot' ? 'Reset your password' : mode === 'seller' ? 'Register as Seller' : mode === 'signup' ? 'Create customer account' : 'Sign in'}
       </h2>
       <p className="mt-1 text-sm text-slate-500">
         {mode === 'forgot' ? 'We will email you a secure link.' : 'Welcome to LEPDO CONNECT.'}
@@ -72,7 +84,7 @@ export default function LoginPage() {
         {(mode === 'signup' || mode === 'seller') && (
           <>
             <Field label="Full name"><Input required autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} /></Field>
-            {mode === 'seller' ? <Field label="Phone (optional)"><Input type="tel" autoComplete="tel" maxLength={50} value={phone} onChange={e => setPhone(e.target.value)} /></Field> : <Field label="Company name (optional)"><Input autoComplete="organization" value={company} onChange={(e) => setCompany(e.target.value)} /></Field>}
+            {mode === 'signup' && <Field label="Company name (optional)"><Input autoComplete="organization" value={company} onChange={(e) => setCompany(e.target.value)} /></Field>}
           </>
         )}
         <Field label="Email address">
@@ -86,7 +98,7 @@ export default function LoginPage() {
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         {sent && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{sent}</p>}
         <Button type="submit" variant="primary" size="lg" className="w-full" loading={busy}>
-          {mode === 'password' ? 'Sign in' : mode === 'seller' ? 'Submit seller registration' : mode === 'signup' ? 'Create account' : mode === 'link' ? 'Email me a sign-in link' : 'Send reset link'}
+          {mode === 'verify' ? 'Resend verification' : mode === 'password' ? 'Sign in' : mode === 'seller' ? 'Submit seller registration' : mode === 'signup' ? 'Create account' : mode === 'link' ? 'Email me a sign-in link' : 'Send reset link'}
         </Button>
       </form>
 
@@ -103,6 +115,7 @@ export default function LoginPage() {
               New customer? Create an account
             </button>
             <Button variant="ghost" className="justify-start px-0" onClick={() => { setMode('seller'); setError(null); setSent(null); setPassword(''); }}>Register as Seller</Button>
+            <Button variant="ghost" className="justify-start px-0" icon={<Mail className="h-4 w-4" />} onClick={() => { setMode('verify'); setError(null); setSent(null); }}>Resend verification</Button>
           </>
         ) : (
           <button className="text-left text-brand-indigo hover:underline" onClick={() => { setMode('password'); setError(null); setSent(null); }}>

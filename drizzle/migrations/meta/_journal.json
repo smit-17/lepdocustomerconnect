@@ -176,6 +176,27 @@
       "when": 1795496814171,
       "tag": "0024_seller_approval_and_scoped_operational_access",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795497987279,
+      "tag": "0025_seller_management_and_verification_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795499109770,
+      "tag": "0026_preserve_seller_work_on_account_deletion",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1795499451446,
+      "tag": "0027_retain_seller_uploaded_files_on_removal",
+      "breakpoints": true
     }
   ]
 }

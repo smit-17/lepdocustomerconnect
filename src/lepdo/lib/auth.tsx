@@ -36,7 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
     // Fail closed if the protected authoritative role cannot be read.
     setProfile(data && role ? { ...data, role: role.role, seller_status: request?.status ?? null } as Profile : null);
-  }, []);
+    if (role?.role === 'seller' && (!data?.is_active || request?.status !== 'approved')) qc.clear();
+  }, [qc]);
 
   useEffect(() => {
     let mounted = true;
@@ -62,6 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sub.subscription.unsubscribe();
     };
   }, [loadProfile, qc]);
+
+  useEffect(() => {
+    if (profile?.role !== 'seller' || !session) return;
+    const timer = window.setInterval(() => { void loadProfile(session); }, 3000);
+    return () => window.clearInterval(timer);
+  }, [profile?.role, session, loadProfile]);
 
   const value: AuthState = {
     session,

@@ -130,7 +130,7 @@ export function useUpdates(orderId: string) {
     queryKey: keys.updates(orderId),
     queryFn: () =>
       run<OrderUpdate[]>(
-        supabase.from('order_updates').select('*, author:profiles!order_updates_created_by_fkey(full_name)').eq('order_id', orderId).order('created_at', { ascending: false }).limit(100),
+        supabase.from('order_updates').select('*, author:profile_history!order_updates_created_by_fkey(full_name)').eq('order_id', orderId).order('created_at', { ascending: false }).limit(100),
       ),
   });
 }
@@ -139,7 +139,7 @@ export function usePayments(orderId: string) {
   return useQuery({
     queryKey: keys.payments(orderId),
     queryFn: () =>
-      run<Payment[]>(supabase.from('payments').select('*, author:profiles!payments_created_by_fkey(full_name)').eq('order_id', orderId).order('payment_date').order('created_at')),
+      run<Payment[]>(supabase.from('payments').select('*, author:profile_history!payments_created_by_fkey(full_name)').eq('order_id', orderId).order('payment_date').order('created_at')),
   });
 }
 
@@ -147,7 +147,7 @@ export function useDocuments(orderId: string) {
   return useQuery({
     queryKey: keys.documents(orderId),
     queryFn: () =>
-      run<Doc[]>(supabase.from('documents').select('*, author:profiles!documents_created_by_fkey(full_name)').eq('order_id', orderId).order('created_at', { ascending: false })),
+      run<Doc[]>(supabase.from('documents').select('*, author:profile_history!documents_created_by_fkey(full_name)').eq('order_id', orderId).order('created_at', { ascending: false })),
   });
 }
 

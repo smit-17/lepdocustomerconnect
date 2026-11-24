@@ -104,6 +104,9 @@ export const changeTeamEmail = createServerFn({ method: 'POST' })
     if (!EMAIL_RE.test(email)) throw new Error('A valid email address is required.');
     const { data: target } = await admin.from('profiles').select('id, role, email').eq('id', body.user_id).single();
     if (!target || target.role === 'customer') throw new Error('Team member not found.');
+    const { data: targetRole, error: targetRoleError } = await admin.from('user_roles').select('role').eq('user_id', body.user_id).maybeSingle();
+    if (targetRoleError || !targetRole) throw new Error('Could not verify the account role.');
+    if (targetRole.role === 'seller') throw new Error('Seller email verification must use Seller Requests, not team email changes.');
     if (target.email.toLowerCase() === email) return { ok: true };
     const { data: clash } = await admin.from('profiles').select('id').ilike('email', email).maybeSingle();
     if (clash) throw new Error('This email is already used by another account.');

@@ -201,21 +201,21 @@ export type Database = {
             foreignKeyName: "customers_assigned_executive_id_fkey"
             columns: ["assigned_executive_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "customers_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "customers_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
         ]
@@ -262,7 +262,7 @@ export type Database = {
             foreignKeyName: "documents_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
@@ -385,7 +385,7 @@ export type Database = {
             foreignKeyName: "metal_supplies_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
         ]
@@ -453,7 +453,7 @@ export type Database = {
             foreignKeyName: "order_approvals_decided_by_fkey"
             columns: ["decided_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
@@ -481,7 +481,7 @@ export type Database = {
             foreignKeyName: "order_approvals_requested_by_fkey"
             columns: ["requested_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
         ]
@@ -554,7 +554,7 @@ export type Database = {
             foreignKeyName: "order_stages_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
         ]
@@ -651,7 +651,7 @@ export type Database = {
             foreignKeyName: "order_updates_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
@@ -792,7 +792,7 @@ export type Database = {
             foreignKeyName: "orders_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
@@ -813,14 +813,14 @@ export type Database = {
             foreignKeyName: "orders_executive_override_id_fkey"
             columns: ["executive_override_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "orders_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
         ]
@@ -888,14 +888,14 @@ export type Database = {
             foreignKeyName: "payments_confirmed_by_fkey"
             columns: ["confirmed_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payments_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
@@ -923,7 +923,7 @@ export type Database = {
             foreignKeyName: "payments_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
         ]
@@ -975,6 +975,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profile_history: {
+        Row: {
+          full_name: string
+          id: string
+        }
+        Insert: {
+          full_name: string
+          id: string
+        }
+        Update: {
+          full_name?: string
+          id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1063,7 +1078,7 @@ export type Database = {
             foreignKeyName: "seller_requests_decided_by_fkey"
             columns: ["decided_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
@@ -1074,6 +1089,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seller_signup_limits: {
+        Row: {
+          attempts: number
+          bucket: string
+          window_start: string
+        }
+        Insert: {
+          attempts?: number
+          bucket: string
+          window_start?: string
+        }
+        Update: {
+          attempts?: number
+          bucket?: string
+          window_start?: string
+        }
+        Relationships: []
       }
       shipments: {
         Row: {
@@ -1129,7 +1162,7 @@ export type Database = {
             foreignKeyName: "shipments_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
@@ -1157,7 +1190,7 @@ export type Database = {
             foreignKeyName: "shipments_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
         ]
@@ -1292,21 +1325,21 @@ export type Database = {
             foreignKeyName: "customers_assigned_executive_id_fkey"
             columns: ["assigned_executive_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "customers_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "customers_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
         ]
@@ -1357,7 +1390,7 @@ export type Database = {
             foreignKeyName: "orders_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
@@ -1378,14 +1411,14 @@ export type Database = {
             foreignKeyName: "orders_executive_override_id_fkey"
             columns: ["executive_override_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "orders_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profile_history"
             referencedColumns: ["id"]
           },
         ]
@@ -1397,6 +1430,16 @@ export type Database = {
         Returns: Json
       }
       admin_get_workflow: { Args: { p_type: string }; Returns: Json }
+      admin_manage_seller: {
+        Args: {
+          p_active: boolean
+          p_full_name: string
+          p_phone: string
+          p_status: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       admin_review_seller: {
         Args: { p_status: string; p_user_id: string }
         Returns: undefined
@@ -1408,6 +1451,19 @@ export type Database = {
       admin_save_workflow: {
         Args: { p_definition?: Json; p_reset?: boolean; p_type: string }
         Returns: undefined
+      }
+      admin_seller_directory: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          email_verified: boolean
+          full_name: string
+          is_active: boolean
+          phone: string
+          status: string
+          user_id: string
+        }[]
       }
       admin_user_directory: {
         Args: never
@@ -1441,6 +1497,7 @@ export type Database = {
         Returns: string
       }
       can_read_document_object: { Args: { p_path: string }; Returns: boolean }
+      consume_seller_signup: { Args: { p_bucket: string }; Returns: boolean }
       create_default_stages: {
         Args: { p_order_id: string; p_type: string }
         Returns: undefined
@@ -1510,6 +1567,10 @@ export type Database = {
           p_status: string
         }
         Returns: string
+      }
+      release_seller_file_ownership: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       review_kyc: {
         Args: { p_id: string; p_reason?: string; p_status: string }
