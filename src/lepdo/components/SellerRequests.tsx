@@ -19,7 +19,7 @@ interface RequestRow {
 }
 
 export default function SellerRequests() {
-  const { isAdmin } = useAuth();
+  const { isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
@@ -28,12 +28,12 @@ export default function SellerRequests() {
   const loadSellers = useServerFn(sellerDirectory);
   const removeSeller = useServerFn(deleteSellerPermanently);
   const requests = useQuery({
-    queryKey: ['seller-requests'], enabled: isAdmin,
+    queryKey: ['seller-requests'], enabled: isSuperAdmin,
     queryFn: async () => {
       return await loadSellers() as RequestRow[];
     },
   });
-  if (!isAdmin) return null;
+  if (!isSuperAdmin) return null;
   async function persist(edit: SellerEdit) {
     if (busy) return;
     setBusy(edit.user_id);

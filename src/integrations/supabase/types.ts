@@ -1508,6 +1508,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_operator: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       my_customer_id: { Args: never; Returns: string }
       original_workflow: { Args: { p_type: string }; Returns: Json }
       portal_accept_terms: { Args: { p_version: string }; Returns: undefined }

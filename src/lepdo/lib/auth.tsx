@@ -11,6 +11,8 @@ interface AuthState {
   loading: boolean;
   isStaff: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
+  isPasswordRecovery: boolean;
   isOperator: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -22,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setPasswordRecovery] = useState(false);
   const qc = useQueryClient();
 
   const loadProfile = useCallback(async (s: Session | null) => {
@@ -49,12 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true);
+      if (event === 'SIGNED_OUT') setPasswordRecovery(false);
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'SIGNED_OUT') {
         // defer to avoid deadlocks inside the auth callback
         setTimeout(() => loadProfile(s), 0);
       }
       if (event === 'SIGNED_OUT') qc.clear();
-      if (event === 'PASSWORD_RECOVERY' && window.location.pathname !== '/set-password') {
+      if (event === 'PASSWORD_RECOVERY' && !['/set-password', '/reset-password'].includes(window.location.pathname)) {
         window.location.assign('/set-password');
       }
     });
@@ -74,8 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     profile,
     loading,
+    isPasswordRecovery,
     isStaff: !!profile && accountAccess(profile.role, profile.is_active, profile.seller_status).isStaff,
     isAdmin: !!profile && accountAccess(profile.role, profile.is_active, profile.seller_status).isAdmin,
+    isSuperAdmin: !!profile && accountAccess(profile.role, profile.is_active, profile.seller_status).isSuperAdmin,
     isOperator: !!profile && accountAccess(profile.role, profile.is_active, profile.seller_status).isOperator,
     refreshProfile: () => loadProfile(session),
     signOut: async () => {

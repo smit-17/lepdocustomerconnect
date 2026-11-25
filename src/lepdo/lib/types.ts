@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'team' | 'customer' | 'seller';
+export type Role = 'super_admin' | 'admin' | 'team' | 'customer' | 'seller';
 export type OrderType = 'diamond' | 'jewellery';
 export type OrderStatus = 'active' | 'completed' | 'cancelled';
 export type StageStatus = 'upcoming' | 'in_progress' | 'completed' | 'attention' | 'blocked' | 'not_applicable';

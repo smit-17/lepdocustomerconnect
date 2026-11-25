@@ -22,8 +22,9 @@ describe('Seller approval and permissions', () => {
     expect(access.canAccessAccountSettings).toBe(false);
     expect(access.isAdmin).toBe(false);
   });
-  it('keeps admin management permissions', () => {
-    expect(accountAccess('admin', true).canManageSellers).toBe(true);
+  it('restricts seller management to Super Admin', () => {
+    expect(accountAccess('admin', true).canManageSellers).toBe(false);
+    expect(accountAccess('super_admin', true).canManageSellers).toBe(true);
   });
   it('keeps customer and executive permissions unchanged', () => {
     expect(accountAccess('customer', true).isStaff).toBe(false);

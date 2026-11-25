@@ -36,8 +36,8 @@ export const registerSeller = createServerFn({ method: 'POST' })
 export const sellerDirectory = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: allowed, error: roleError } = await context.supabase.rpc('is_admin');
-    if (roleError || !allowed) throw new Error('Administrators only.');
+    const { data: allowed, error: roleError } = await context.supabase.rpc('is_super_admin');
+    if (roleError || !allowed) throw new Error('Super Admin only.');
     const { data: rows, error } = await context.supabase.rpc('admin_seller_directory');
     if (error) throw new Error(error.message);
     // Listing is read-only. Account activation belongs to the explicit save

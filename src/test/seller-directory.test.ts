@@ -32,12 +32,12 @@ describe('seller directory read-only access', () => {
     rpc.mockResolvedValueOnce({ data: true, error: null })
       .mockResolvedValueOnce({ data: rows, error: null });
     await expect(directory({ context: { supabase: { rpc } } })).resolves.toEqual(rows);
-    expect(rpc.mock.calls).toEqual([['is_admin'], ['admin_seller_directory']]);
+    expect(rpc.mock.calls).toEqual([['is_super_admin'], ['admin_seller_directory']]);
   });
 
   it('rejects non-administrators before reading seller records', async () => {
     rpc.mockResolvedValueOnce({ data: false, error: null });
-    await expect(directory({ context: { supabase: { rpc } } })).rejects.toThrow('Administrators only.');
+    await expect(directory({ context: { supabase: { rpc } } })).rejects.toThrow('Super Admin only.');
     expect(rpc).toHaveBeenCalledTimes(1);
   });
 

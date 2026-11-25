@@ -16,8 +16,9 @@ import type { OrderType } from '../../lib/types';
 import ResetHistoryButton from '../../components/ResetHistoryButton';
 import { passwordChangeError } from '../../lib/account';
 import SellerRequests from '../../components/SellerRequests';
+import { directoryRoleVisible } from '../../lib/seller-access';
 
-type Tab = 'company' | 'team' | 'invitations' | 'account' | 'configuration' | 'sellers';
+type Tab = 'company' | 'team' | 'invitations' | 'account' | 'super' | 'configuration' | 'sellers';
 
 interface DirRow {
   id: string; email: string; full_name: string; role: Role; is_active: boolean; customer_id: string | null; customer_name: string | null;
@@ -29,10 +30,10 @@ function useDirectory(enabled: boolean) {
 }
 
 export default function SettingsPage() {
-  const { isAdmin, isOperator, profile } = useAuth();
+  const { isAdmin, isSuperAdmin, isOperator, profile } = useAuth();
   const [tab, setTab] = useState<Tab>('company');
   const items = isAdmin
-    ? [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'team' as Tab, label: 'Team Members' }, { value: 'invitations' as Tab, label: 'User Invitations' }, { value: 'account' as Tab, label: 'Account Settings' }, { value: 'configuration' as Tab, label: 'Configuration' }, { value: 'sellers' as Tab, label: 'Seller Requests' }]
+    ? [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'team' as Tab, label: 'Team Members' }, { value: 'invitations' as Tab, label: 'User Invitations' }, { value: 'account' as Tab, label: 'Admin' }, ...(isSuperAdmin ? [{ value: 'super' as Tab, label: 'Super Admin' }] : []), { value: 'configuration' as Tab, label: 'Configuration' }, ...(isSuperAdmin ? [{ value: 'sellers' as Tab, label: 'Seller Requests' }] : [])]
     : profile?.role === 'seller' ? [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'configuration' as Tab, label: 'Configuration' }] : [{ value: 'company' as Tab, label: 'Company Profile' }, { value: 'account' as Tab, label: 'Account Settings' }];
   return (
     <>
@@ -41,14 +42,16 @@ export default function SettingsPage() {
       {tab === 'company' && <CompanyProfile />}
       {tab === 'team' && isAdmin && <TeamMembers />}
       {tab === 'invitations' && isAdmin && <Invitations />}
-      {tab === 'account' && profile?.role !== 'seller' && <AccountSettings />}
+      {tab === 'account' && profile?.role !== 'seller' && (isSuperAdmin ? <TeamMembers key="administrators" administratorsOnly /> : <AccountSettings />)}
+      {tab === 'super' && isSuperAdmin && <AccountSettings />}
       {tab === 'configuration' && isOperator && <Configuration />}
-      {tab === 'sellers' && isAdmin && <SellerRequests />}
+      {tab === 'sellers' && isSuperAdmin && <SellerRequests />}
     </>
   );
 }
 
 function Configuration() {
+  const { isAdmin } = useAuth();
   const settings = useSettings();
   const qc = useQueryClient();
   const toast = useToast();
@@ -70,7 +73,7 @@ function Configuration() {
     <fieldset disabled={busy || !settings.data}>
       <Toggle checked={settings.data?.edit_running_order_steps ?? false} onChange={change} label="Edit steps while order running" />
     </fieldset>
-    <UniversalWorkflows />
+    {isAdmin && <UniversalWorkflows />}
   </section>;
 }
 
@@ -92,7 +95,7 @@ function UniversalWorkflows() {
 
 /* ================================================================ Company */
 function CompanyProfile() {
-  const { isAdmin, isOperator } = useAuth();
+  const { isOperator } = useAuth();
   const { data, isLoading } = useSettings();
   const qc = useQueryClient();
   const toast = useToast();
@@ -134,11 +137,6 @@ function CompanyProfile() {
           <Field label="Default currency for new orders">
             <Select value={f.default_currency} onChange={set('default_currency')} className="max-w-[140px]">{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</Select>
           </Field>
-          {isAdmin && <div className="rounded-lg border border-slate-200 p-4">
-            <Toggle checked={f.team_sees_all} onChange={(v) => isAdmin && setF((x) => ({ ...x, team_sees_all: v }))}
-              label="Team members can see all customers and orders"
-              hint="Off: team members only see customers and orders assigned to or created by them. Administrators always see everything." />
-          </div>}
         </fieldset>
         {isOperator ? <Button type="submit" variant="primary" loading={busy}>Save</Button> : <p className="text-xs text-slate-500">Only administrators can change company settings.</p>}
       </form>
@@ -153,15 +151,16 @@ function statusOf(r: DirRow) {
   return <Badge tone="blue">Invited</Badge>;
 }
 
-function TeamMembers() {
-  const { profile } = useAuth();
+function TeamMembers({ administratorsOnly = false }: { administratorsOnly?: boolean }) {
+  const { profile, isSuperAdmin } = useAuth();
   const dir = useDirectory(true);
   const qc = useQueryClient();
   const toast = useToast();
-  const [inv, setInv] = useState({ full_name: '', email: '', phone: '', role: 'team' as 'team' | 'admin' });
+  const defaultRole = administratorsOnly ? 'admin' : 'team';
+  const [inv, setInv] = useState({ full_name: '', email: '', phone: '', role: defaultRole as 'team' | 'admin' });
   const [busy, setBusy] = useState<string | null>(null);
   const [editing, setEditing] = useState<DirRow | null>(null);
-  const staff = (dir.data || []).filter((r) => r.role === 'admin' || r.role === 'team');
+  const staff = (dir.data || []).filter((r) => directoryRoleVisible(r.role, isSuperAdmin, administratorsOnly));
 
   const refresh = () => { qc.invalidateQueries({ queryKey: keys.directory }); qc.invalidateQueries({ queryKey: keys.staff }); };
 
@@ -172,7 +171,7 @@ function TeamMembers() {
     try {
       const r = await sendInvite({ kind: 'team', email: inv.email.trim().toLowerCase(), full_name: inv.full_name.trim(), ...(inv.phone.trim() ? { phone: inv.phone.trim() } : {}), role: inv.role });
       toast.success(`Invitation ${r.status === 'resent' ? 're-sent' : 'sent'} to ${r.email}`);
-      setInv({ full_name: '', email: '', phone: '', role: 'team' });
+      setInv({ full_name: '', email: '', phone: '', role: defaultRole });
       refresh();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -204,7 +203,7 @@ function TeamMembers() {
 
   return (
     <div className="space-y-6">
-      <Card title="Invite a team member" className="max-w-4xl">
+      <Card title={administratorsOnly ? 'Invite an admin' : 'Invite a team member'} className="max-w-4xl">
         <form onSubmit={invite} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_1fr_130px_auto] sm:items-end">
           <Field label="Full name"><Input value={inv.full_name} onChange={(e) => setInv({ ...inv, full_name: e.target.value })} /></Field>
           <Field label="Email"><Input type="email" value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} /></Field>
@@ -214,7 +213,7 @@ function TeamMembers() {
         </form>
       </Card>
 
-      <Card title={`Team Members (${staff.length})`} bodyClass="p-0">
+      <Card title={`${administratorsOnly ? 'Admins' : 'Team Members'} (${staff.length})`} bodyClass="p-0">
         {dir.isLoading ? <PageLoader /> : (
           <div className="overflow-x-auto">
             <table className="table-base">
@@ -229,18 +228,19 @@ function TeamMembers() {
                       </div>
                     </td>
                     <td>
-                      <Select value={r.role} disabled={r.id === profile?.id || busy === r.id} onChange={(e) => update(r, { role: e.target.value as Role })} className="h-8 w-32 text-[13px]">
+                      {r.role === 'seller' || r.role === 'super_admin' ? <Badge>{r.role === 'super_admin' ? 'Super Admin' : 'Executive'}</Badge> : <Select value={r.role} disabled={r.id === profile?.id || busy === r.id} onChange={(e) => update(r, { role: e.target.value as Role })} className="h-8 w-32 text-[13px]">
                         <option value="team">Team member</option><option value="admin">Admin</option>
-                      </Select>
+                      </Select>}
                     </td>
                     <td>{statusOf(r)}<p className="mt-0.5 text-xs text-slate-400">{r.last_sign_in_at ? `last seen ${timeAgo(r.last_sign_in_at)}` : `invited ${fmtDate(r.created_at)}`}</p></td>
                     <td className="text-xs text-slate-600">{r.job_title && <p>{r.job_title}</p>}{r.phone && <p>{r.phone}</p>}{r.whatsapp && <p>WhatsApp {r.whatsapp}</p>}{!r.job_title && !r.phone && !r.whatsapp && <span className="text-slate-400">Email only</span>}</td>
-                    <td className="whitespace-nowrap text-right">
+                    <td className="whitespace-nowrap text-right">{r.role !== 'super_admin' && <>
                       <Button size="sm" variant="ghost" icon={<Pencil className="h-3.5 w-3.5" />} onClick={() => setEditing(r)}>Edit</Button>
-                      {!r.last_sign_in_at && r.is_active && <Button size="sm" variant="ghost" loading={busy === r.id} onClick={() => resend(r)}>Resend</Button>}
-                      {r.id !== profile?.id && (r.is_active
+                      {r.role !== 'seller' && !r.last_sign_in_at && r.is_active && <Button size="sm" variant="ghost" loading={busy === r.id} onClick={() => resend(r)}>Resend</Button>}
+                      {r.role !== 'seller' && r.id !== profile?.id && (r.is_active
                         ? <Button size="sm" variant="ghost" className="text-red-700" disabled={busy === r.id} onClick={() => update(r, { is_active: false })}>Deactivate</Button>
                         : <Button size="sm" variant="ghost" disabled={busy === r.id} onClick={() => update(r, { is_active: true })}>Activate</Button>)}
+                      </>}
                     </td>
                   </tr>
                 ))}
@@ -282,7 +282,7 @@ function ContactDrawer({ row, onClose }: { row: DirRow | null; onClose: () => vo
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="primary" type="submit" form="contact-form" loading={busy}>Save</Button></>}>
       <form id="contact-form" onSubmit={save} className="space-y-4">
         <Field label="Full name"><Input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} maxLength={120} /></Field>
-        <Field label="Email" hint="Changing this changes the address they sign in with."><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
+        <Field label="Email" hint={row?.role === 'seller' ? undefined : 'Changing this changes the address they sign in with.'}><Input type="email" disabled={row?.role === 'seller'} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
         <Field label="Job title"><Input value={f.job_title} onChange={(e) => setF({ ...f, job_title: e.target.value })} placeholder="e.g. Client Relationship Manager" maxLength={120} /></Field>
         <Field label="Phone"><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="+91 …" /></Field>
         <Field label="WhatsApp" hint="Customers get a one-tap WhatsApp button."><Input value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} placeholder="+91 …" /></Field>
@@ -371,7 +371,7 @@ function Invitations() {
 
 /* ================================================================ Account */
 function AccountSettings() {
-  const { profile, refreshProfile, session } = useAuth();
+  const { profile, refreshProfile, session, isAdmin } = useAuth();
   const toast = useToast();
   const qc = useQueryClient();
   const [f, setF] = useState({ full_name: '', job_title: '', phone: '', whatsapp: '' });
@@ -425,6 +425,15 @@ function AccountSettings() {
   async function changePassword(e: FormEvent) {
     e.preventDefault();
     if (busy) return;
+    if (isAdmin) {
+      setBusy('pw');
+      const { data: verified, error: verificationError } = await supabase.auth.getUser();
+      if (verificationError || !verified.user?.email) { setBusy(null); return toast.error('Please sign in again.'); }
+      const { error } = await supabase.auth.resetPasswordForEmail(verified.user.email, { redirectTo: `${window.location.origin}/reset-password` });
+      setBusy(null);
+      if (error) return toast.error(error.message);
+      return toast.success('A password change link has been sent to your existing email address.');
+    }
     const validation = passwordChangeError(pw.current, pw.a, pw.b);
     if (validation) return toast.error(validation);
     setBusy('pw');
@@ -459,10 +468,12 @@ function AccountSettings() {
       </Card>
       <Card title="Change password">
         <form onSubmit={changePassword} className="space-y-4">
+          {!isAdmin && <>
           <Field label="Current password"><Input type="password" autoComplete="current-password" required value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} /></Field>
           <Field label="New password"><Input type="password" autoComplete="new-password" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value })} /></Field>
           <Field label="Confirm password"><Input type="password" autoComplete="new-password" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} /></Field>
-          <Button type="submit" loading={busy === 'pw'}>Update password</Button>
+          </>}
+          <Button type="submit" loading={busy === 'pw'}>{isAdmin ? 'Send password change link' : 'Update password'}</Button>
         </form>
         <div className="mt-6"><ResetHistoryButton /></div>
       </Card>

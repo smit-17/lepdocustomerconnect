@@ -19,7 +19,7 @@ export const inviteUser = createServerFn({ method: 'POST' })
   .handler(async ({ data: body, context }) => {
     const { supabase: asCaller, userId } = context;
     const { data: callerRole, error: callerError } = await asCaller.rpc('auth_role');
-    if (callerError || !callerRole || !['admin', 'team', 'seller'].includes(callerRole)) {
+    if (callerError || !callerRole || !['super_admin', 'admin', 'team', 'seller'].includes(callerRole)) {
       throw new Error('Only LEPDO team members can send invitations.');
     }
 
@@ -45,7 +45,7 @@ export const inviteUser = createServerFn({ method: 'POST' })
       fullName = fullName || customer.contact_person || customer.name;
       role = 'customer';
     } else {
-      if (callerRole !== 'admin') throw new Error('Only administrators can invite team members.');
+      if (!['super_admin', 'admin'].includes(callerRole)) throw new Error('Only administrators can invite team members.');
       role = body.role === 'admin' ? 'admin' : 'team';
     }
     if (!EMAIL_RE.test(email)) throw new Error('A valid email address is required.');
@@ -53,6 +53,7 @@ export const inviteUser = createServerFn({ method: 'POST' })
     const { data: existing } = await admin.from('profiles').select('id, role, customer_id').ilike('email', email).maybeSingle();
     if (existing) {
       const { data: existingRole } = await admin.from('user_roles').select('role').eq('user_id', existing.id).maybeSingle();
+      if (existingRole?.role === 'super_admin') throw new Error('Super Admin accounts cannot be changed through invitations.');
       if (existingRole?.role === 'seller') throw new Error('Seller accounts are managed through Seller Requests.');
       if (role === 'customer' && existing.role !== 'customer')
         throw new Error('This email belongs to a LEPDO team account and cannot be used for a customer.');
@@ -112,6 +113,7 @@ export const changeTeamEmail = createServerFn({ method: 'POST' })
     if (!target || target.role === 'customer') throw new Error('Team member not found.');
     const { data: targetRole, error: targetRoleError } = await admin.from('user_roles').select('role').eq('user_id', body.user_id).maybeSingle();
     if (targetRoleError || !targetRole) throw new Error('Could not verify the account role.');
+    if (targetRole.role === 'super_admin') throw new Error('Super Admin email changes require confirmation in their own account settings.');
     if (targetRole.role === 'seller') throw new Error('Seller email verification must use Seller Requests, not team email changes.');
     if (target.email.toLowerCase() === email) return { ok: true };
     const { data: clash } = await admin.from('profiles').select('id').ilike('email', email).maybeSingle();

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PortalRouteImport } from './routes/portal'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -47,6 +48,11 @@ const LoginRoute = LoginRouteImport.update({
 const PortalRoute = PortalRouteImport.update({
   id: '/portal',
   path: '/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetPasswordRoute = SetPasswordRouteImport.update({
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/portal': typeof PortalRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/portal-share/$token': typeof PortalShareTokenRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/portal-share/$token': typeof PortalShareTokenRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/portal': typeof PortalRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/portal-share/$token': typeof PortalShareTokenRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/portal'
+    | '/reset-password'
     | '/set-password'
     | '/admin/settings'
     | '/portal-share/$token'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/reset-password'
     | '/set-password'
     | '/admin/settings'
     | '/portal-share/$token'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/portal'
+    | '/reset-password'
     | '/set-password'
     | '/admin/settings'
     | '/portal-share/$token'
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   PortalRoute: typeof PortalRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SetPasswordRoute: typeof SetPasswordRoute
   PortalShareTokenRoute: typeof PortalShareTokenRoute
   TrackTokenRoute: typeof TrackTokenRoute
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       path: '/portal'
       fullPath: '/portal'
       preLoaderRoute: typeof PortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/set-password': {
@@ -444,6 +464,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
   PortalRoute: PortalRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   SetPasswordRoute: SetPasswordRoute,
   PortalShareTokenRoute: PortalShareTokenRoute,
   TrackTokenRoute: TrackTokenRoute,

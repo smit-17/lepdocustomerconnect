@@ -7,7 +7,7 @@ import { useAuth } from '../../lib/auth';
 
 /** Landing page for invitation and password-recovery links. */
 export default function SetPasswordPage() {
-  const { session, profile, refreshProfile } = useAuth();
+  const { session, profile, refreshProfile, isPasswordRecovery } = useAuth();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -15,6 +15,9 @@ export default function SetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [waited, setWaited] = useState(false);
   const linkError = new URLSearchParams(window.location.hash.slice(1)).get('error_description');
+  const [confirmedRecovery] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery');
+  const recoveryReady = confirmedRecovery || isPasswordRecovery;
+  const recoveryPage = window.location.pathname === '/reset-password';
 
   useEffect(() => {
     const t = setTimeout(() => setWaited(true), 2500);
@@ -24,6 +27,7 @@ export default function SetPasswordPage() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (recoveryPage && !recoveryReady) return setError('Open the password change link sent to your email address.');
     if (password.length < 8) return setError('Use at least 8 characters.');
     if (password !== confirm) return setError('Passwords do not match.');
     setBusy(true);

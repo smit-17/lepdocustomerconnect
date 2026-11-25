@@ -52,7 +52,7 @@ export default function AdminLayout() {
       <Avatar name={profile?.full_name || profile?.email} url={profile?.photo_url} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-slate-800">{profile?.full_name || profile?.email}</p>
-        <p className="text-xs capitalize text-slate-500">{profile?.role === 'team' ? 'Team member' : profile?.role}</p>
+        <p className="text-xs capitalize text-slate-500">{profile?.role === 'super_admin' ? 'Super Admin' : profile?.role === 'team' || profile?.role === 'seller' ? 'Executive' : profile?.role}</p>
       </div>
       <button onClick={signOut} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-brand-indigo" title="Sign out" aria-label="Sign out">
         <LogOut className="h-4 w-4" />
